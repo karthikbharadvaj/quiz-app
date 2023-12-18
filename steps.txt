@@ -1,0 +1,147 @@
+Step 1: Set up the server (Node.js and Express)
+Create a new directory for your project and navigate to it in the terminal.
+bash
+Copy code
+mkdir react-quiz-app
+cd react-quiz-app
+Initialize a Node.js project.
+bash
+Copy code
+npm init -y
+Install necessary dependencies.
+bash
+Copy code
+npm install express pg body-parser cors
+Create a file named server.ts for your Node.js server.
+typescript
+Copy code
+// server.ts
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import { Pool } from 'pg';
+
+const app = express();
+const port = 5000;
+
+app.use(bodyParser.json());
+app.use(cors());
+
+const pool = new Pool({
+  user: 'your_username',
+  host: 'localhost',
+  database: 'your_database',
+  password: 'your_password',
+  port: 5432,
+});
+
+app.get('/api/questions', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM questions');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
+Step 2: Set up the PostgreSQL database
+Create a PostgreSQL database and a table.
+sql
+Copy code
+-- create_quiz_table.sql
+CREATE TABLE questions (
+  id SERIAL PRIMARY KEY,
+  question_text TEXT,
+  option1 TEXT,
+  option2 TEXT,
+  option3 TEXT,
+  option4 TEXT,
+  correct_option TEXT
+);
+Execute the SQL script using the psql command-line tool or your preferred PostgreSQL client.
+bash
+Copy code
+psql -U your_username -d your_database -a -f create_quiz_table.sql
+Step 3: Set up the React app
+Create a new directory for the React app inside your project folder.
+bash
+Copy code
+mkdir client
+cd client
+Initialize a new React app with TypeScript.
+bash
+Copy code
+npx create-react-app . --template typescript
+Install Axios for making HTTP requests.
+bash
+Copy code
+npm install axios
+Update the src/App.tsx file with the following code:
+typescript
+Copy code
+// src/App.tsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+interface Question {
+  id: number;
+  question_text: string;
+  option1: string;
+  option2: string;
+  option3: string;
+  option4: string;
+  correct_option: string;
+}
+
+const App: React.FC = () => {
+  const [questions, setQuestions] = useState<Question[]>([]);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await axios.get<Question[]>('http://localhost:5000/api/questions');
+        setQuestions(response.data);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
+  return (
+    <div>
+      <h1>Quiz App</h1>
+      <ul>
+        {questions.map((question) => (
+          <li key={question.id}>
+            <strong>{question.question_text}</strong>
+            <ul>
+              <li>{question.option1}</li>
+              <li>{question.option2}</li>
+              <li>{question.option3}</li>
+              <li>{question.option4}</li>
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default App;
+Step 4: Run the application
+In one terminal, start the Node.js server:
+bash
+Copy code
+cd path/to/your/project
+node server.ts
+In another terminal, start the React app:
+bash
+Copy code
+cd path/to/your/project/client
+npm start
