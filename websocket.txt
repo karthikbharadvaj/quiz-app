@@ -1,3 +1,28 @@
+// src/client/client.ts
+const socket = new WebSocket('ws://localhost:3000');
+
+socket.addEventListener('message', (event) => {
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages) {
+    const li = document.createElement('li');
+    li.textContent = event.data;
+    chatMessages.appendChild(li);
+  }
+});
+
+function sendMessage() {
+  const messageInput = document.getElementById('messageInput');
+
+  if (messageInput instanceof HTMLInputElement) {
+    const message = messageInput.value;
+    socket.send(message);
+    messageInput.value = '';
+  }
+}
+
+---------
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
