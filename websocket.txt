@@ -41,10 +41,11 @@ server.listen(PORT, () => {
 
 --client.ts
 // src/client/client.ts
+// src/client/client.ts
 const socket = new WebSocket('ws://localhost:3000');
 
 socket.addEventListener('message', (event) => {
-  const chatMessages = document.getElementById('chatMessages');
+  const chatMessages = document.getElementById('chatMessages')!;
   const li = document.createElement('li');
   li.textContent = event.data;
   chatMessages.appendChild(li);
@@ -56,6 +57,7 @@ function sendMessage() {
   socket.send(message);
   messageInput.value = '';
 }
+
 
 --index.html
 <!-- index.html -->
