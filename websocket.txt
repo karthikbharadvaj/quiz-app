@@ -14,6 +14,51 @@ function sendMessage() {
   const messageInput = document.getElementById('messageInput');
 
   if (messageInput instanceof HTMLInputElement) {
+    const message = messageInput.value.trim();
+
+    if (message !== '') {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'text', content: message }));
+        messageInput.value = '';
+      } else {
+        console.error('WebSocket is not open. Attempting to reopen...');
+        
+        // Attempt to reopen the WebSocket
+        socket.close();  // Close the existing WebSocket
+        initializeWebSocket();  // Reinitialize the WebSocket
+      }
+    } else {
+      console.warn('Message is empty.');
+    }
+  }
+}
+
+function initializeWebSocket() {
+  // Reinitialize the WebSocket
+  socket = new WebSocket('ws://localhost:3000');
+
+  // Add event listeners, if needed
+  // socket.addEventListener('open', handleOpen);
+  // socket.addEventListener('close', handleClose);
+  // socket.addEventListener('error', handleError);
+}
+--
+// src/client/client.ts
+const socket = new WebSocket('ws://localhost:3000');
+
+socket.addEventListener('message', (event) => {
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages) {
+    const li = document.createElement('li');
+    li.textContent = event.data;
+    chatMessages.appendChild(li);
+  }
+});
+
+function sendMessage() {
+  const messageInput = document.getElementById('messageInput');
+
+  if (messageInput instanceof HTMLInputElement) {
     const message = messageInput.value.trim(); // Trim to remove leading/trailing whitespaces
 
     if (message !== '') {
