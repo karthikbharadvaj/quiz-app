@@ -15,6 +15,36 @@ function sendMessage() {
 
   if (messageInput instanceof HTMLInputElement) {
     const message = messageInput.value;
+
+    // Check if the WebSocket is in OPEN state before sending a message
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(message);
+      messageInput.value = '';
+    } else {
+      console.error('WebSocket is not open.');
+    }
+  }
+}
+
+
+------------
+// src/client/client.ts
+const socket = new WebSocket('ws://localhost:3000');
+
+socket.addEventListener('message', (event) => {
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages) {
+    const li = document.createElement('li');
+    li.textContent = event.data;
+    chatMessages.appendChild(li);
+  }
+});
+
+function sendMessage() {
+  const messageInput = document.getElementById('messageInput');
+
+  if (messageInput instanceof HTMLInputElement) {
+    const message = messageInput.value;
     socket.send(message);
     messageInput.value = '';
   }
