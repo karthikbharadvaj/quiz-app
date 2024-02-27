@@ -1,5 +1,43 @@
 import React from 'react';
 import { render } from '@testing-library/react';
+
+interface Props {
+  sessionExpired: boolean;
+}
+
+const YourComponent: React.FC<Props> = ({ sessionExpired }) => {
+
+  const handleImageClick = () => {
+    if (!sessionExpired) {
+      // Redirect logic here
+      window.location.href = '/your-redirect-url';
+    }
+  };
+
+  return (
+    <div>
+      {/* Your component content */}
+      <img src="/path/to/image.png" alt="Your Image Alt Text" onClick={handleImageClick} />
+    </div>
+  );
+};
+
+describe('YourComponent', () => {
+  it('disables the redirect link during session timeout', () => {
+    // Render the component with sessionExpired set to true
+    const { getByAltText } = render(<YourComponent sessionExpired={true} />);
+    
+    // Get the image element
+    const redirectImage = getByAltText('Your Image Alt Text');
+    
+    // Assert that the redirect link is disabled
+    expect(redirectImage).toHaveAttribute('disabled');
+  });
+});
+
+----------
+import React from 'react';
+import { render } from '@testing-library/react';
 import YourComponent from './YourComponent'; // Import your component
 
 describe('YourComponent', () => {
