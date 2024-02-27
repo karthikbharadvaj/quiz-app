@@ -1,4 +1,34 @@
 import React from 'react';
+import { renderWithProviderAndBrowserRouter } from './testUtils'; // Import your custom render function
+import userEvent from '@testing-library/user-event'; // Import userEvent
+import YourComponent from './YourComponent'; // Import your component
+
+describe('YourComponent', () => {
+  it('disables the logo redirect on click', () => {
+    // Render the component with provider and browser router
+    const { container } = renderWithProviderAndBrowserRouter(<YourComponent />);
+    
+    // Get the logo element
+    const logo = container.querySelector('.your-logo-class');
+
+    // Ensure that the logo element exists
+    expect(logo).not.toBeNull();
+
+    if (logo) {
+      // Simulate a click event on the logo using userEvent
+      userEvent.click(logo);
+      
+      // Assert that the logo redirect is disabled
+      expect(logo).toHaveAttribute('disabled');
+    } else {
+      // Fail the test if logo element is not found
+      fail('Logo element not found');
+    }
+  });
+});
+
+----------
+import React from 'react';
 import { render } from '@testing-library/react';
 
 interface Props {
