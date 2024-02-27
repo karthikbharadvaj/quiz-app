@@ -1,3 +1,24 @@
+import React from 'react';
+import { renderWithProviderAndBrowserRouter } from './test-utils'; // custom function to render component with provider and BrowserRouter
+import userEvent from '@testing-library/user-event';
+
+describe('Logo', () => {
+  it('should disable the redirect function when session is timed out', () => {
+    const { container } = renderWithProviderAndBrowserRouter(<Logo isSessionTimedOut={true} />);
+
+    const logo = container.getElementsByClassName('logo')[0];
+    userEvent.click(logo);
+
+    // assuming there is a <Redirect> component that redirects to another page
+    const redirect = container.getElementsByClassName('redirect')[0];
+    expect(redirect).toBeTruthy();
+
+    // assuming there is a <button> component that is disabled when session is timed out
+    const button = container.getElementsByClassName('button')[0];
+    expect(button).toBeDisabled();
+  });
+});
+------------
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
