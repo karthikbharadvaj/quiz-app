@@ -1,20 +1,47 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import YourComponent from './YourComponent'; // Import your component
 
 describe('YourComponent', () => {
-  it('disables the button during session timeout', () => {
-    // Render the component
-    const { getByTestId } = render(<YourComponent />); // Assuming you have a data-testid attribute on your button
+  it('disables the image redirect during session timeout when isSimple is true', () => {
+    // Render the component with isSimple set to true
+    const { getByAltText } = render(<YourComponent isSimple={true} />);
     
-    // Simulate session timeout
-    // For example, if your component uses a session timeout state or context, you would simulate a timeout here
-    // For simplicity, let's assume your component exposes a function to simulate timeout
-    const timeoutButton = getByTestId('your-button-testid'); // Adjust this based on your actual test id
-    fireEvent.click(timeoutButton); // Simulate a click action that triggers a session timeout
+    // Get the image element representing the redirect
+    const redirectImage = getByAltText('Your Image Alt Text');
+    
+    // Assert that the redirect image is disabled
+    expect(redirectImage).toHaveAttribute('disabled');
+  });
 
-    // Assert that the button is disabled
-    expect(timeoutButton).toBeDisabled();
+  it('does not disable the image redirect during session timeout when isSimple is false', () => {
+    // Render the component with isSimple set to false
+    const { getByAltText } = render(<YourComponent isSimple={false} />);
+    
+    // Get the image element representing the redirect
+    const redirectImage = getByAltText('Your Image Alt Text');
+    
+    // Assert that the redirect image is not disabled
+    expect(redirectImage).not.toHaveAttribute('disabled');
   });
 });
+
+*---------------1
+import React from 'react';
+import { render } from '@testing-library/react';
+import YourComponent from './YourComponent'; // Import your component
+
+describe('YourComponent', () => {
+  it('disables the redirect link during session timeout', () => {
+    // Render the component with sessionExpired set to true
+    const { getByAltText } = render(<YourComponent sessionExpired={true} />);
+    
+    // Get the image element
+    const redirectImage = getByAltText('Your Image Alt Text');
+    
+    // Assert that the redirect link is disabled
+    expect(redirectImage).toHaveAttribute('disabled');
+  });
+});
+
 
