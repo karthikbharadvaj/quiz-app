@@ -1,1 +1,20 @@
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react';
+import YourComponent from './YourComponent'; // Import your component
+
+describe('YourComponent', () => {
+  it('disables the button during session timeout', () => {
+    // Render the component
+    const { getByTestId } = render(<YourComponent />); // Assuming you have a data-testid attribute on your button
+    
+    // Simulate session timeout
+    // For example, if your component uses a session timeout state or context, you would simulate a timeout here
+    // For simplicity, let's assume your component exposes a function to simulate timeout
+    const timeoutButton = getByTestId('your-button-testid'); // Adjust this based on your actual test id
+    fireEvent.click(timeoutButton); // Simulate a click action that triggers a session timeout
+
+    // Assert that the button is disabled
+    expect(timeoutButton).toBeDisabled();
+  });
+});
 
