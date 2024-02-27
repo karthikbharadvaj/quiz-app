@@ -1,3 +1,37 @@
+import React from 'react'
+import { render, screen, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { createStore } from 'redux'
+import logo from './logo' // replace with your actual logo component path
+import { sessionTimedOut } from './actions' // replace with your actual session timeout action
+
+const renderWithProvider = (
+  component: React.ReactElement,
+  { initialState, store = createStore(reducer, initialState) } = {}
+) => {
+  return {
+    ...render(<Provider store={store}><BrowserRouter>{component}</BrowserRouter></Provider>),
+    store,
+  }
+}
+
+describe('logo', () => {
+  it('should disable the redirect function during session timeout', async () => {
+    const initialState = { session: { isTimedOut: true } }
+    renderWithProvider(<logo />, { initialState })
+
+    const logoElement = screen.getByRole('button', { name: /logo/i })
+    expect(logoElement).toBeInTheDocument()
+    expect(logoElement).toBeDisabled()
+
+    const store = renderWithProvider(<logo />, { initialState }).store
+    store.dispatch(sessionTimedOut(false))
+
+    await waitFor(() => expect(logoElement).not.toBeDisabled())
+  })
+})
+----------
 import React from 'react';
 import { renderWithProviderAndBrowserRouter } from './testUtils'; // Import your custom render function
 import userEvent from '@testing-library/user-event'; // Import userEvent
