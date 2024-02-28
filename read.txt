@@ -1,3 +1,25 @@
+describe('tradePage function', () => {
+  it('should change page when image is clicked', () => {
+    // Mock the global window object
+    global.window = { location: { href: null } };
+
+    // Render your component with the tradePage function
+    // Replace YourComponent with the component that contains the image
+    renderWithTradePage(<YourComponent />);
+
+    // Simulate a click event on the image
+    const image = screen.getByAltText('Your Image Alt Text');
+    userEvent.click(image);
+
+    // Advance timers
+    jest.advanceTimersByTime(100);
+
+    // Assert that the window location href contains the expected URL
+    expect(global.window.location.href).toContain('/new-url');
+  });
+});
+
+-----------------
 import React from 'react';
 import { renderWithProviderAndBrowserRouter } from './test-utils'; // custom function to render component with provider and BrowserRouter
 import userEvent from '@testing-library/user-event';
