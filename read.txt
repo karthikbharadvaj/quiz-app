@@ -1,40 +1,18 @@
-/* src/css/styles.css */
+import React from 'react';
+import User from '../models/User';
 
-.app {
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  padding: 20px;
+interface UserDetailProps {
+  user: User;
 }
 
-.user-cards {
-  width: 30%;
-}
+const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
+  return (
+    <div className="user-detail">
+      <h2>User Details</h2>
+      <p>Name: {user.name}</p>
+      {/* Add more details as needed */}
+    </div>
+  );
+};
 
-.user-card {
-  cursor: pointer;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.user-card:hover {
-  background-color: #f0f0f0;
-}
-
-.user-card.selected {
-  border: 2px solid blue;
-}
-
-.user-detail {
-  width: 60%;
-}
-
-.user-detail h2 {
-  margin-bottom: 10px;
-}
-
-.user-detail p {
-  margin-bottom: 5px;
-}
+export default UserDetail;
