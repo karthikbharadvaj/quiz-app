@@ -1,19 +1,40 @@
-import React from 'react';
-import User from '../models/User';
-import '../css/styles.css';
+/* src/css/styles.css */
 
-interface UserCardProps {
-  user: User;
-  onClick: () => void;
-  isSelected: boolean;
+.app {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  padding: 20px;
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user, onClick, isSelected }) => {
-  return (
-    <div onClick={onClick} className={`user-card ${isSelected ? 'selected' : ''}`}>
-      <p>{user.name}</p>
-    </div>
-  );
-};
+.user-cards {
+  width: 30%;
+}
 
-export default UserCard;
+.user-card {
+  cursor: pointer;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.user-card:hover {
+  background-color: #f0f0f0;
+}
+
+.user-card.selected {
+  border: 2px solid blue;
+}
+
+.user-detail {
+  width: 60%;
+}
+
+.user-detail h2 {
+  margin-bottom: 10px;
+}
+
+.user-detail p {
+  margin-bottom: 5px;
+}
