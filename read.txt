@@ -1,24 +1,17 @@
-import React from "react";
-import User, { IUser } from "./User";
+import React from 'react';
+import User from '../models/User';
+import '../css/styles.css';
 
 interface UserCardProps {
-  user: IUser;
+  user: User;
+  onClick: () => void;
   isSelected: boolean;
-  onUserCardClick: (userId: number) => void;
 }
 
-const UserCard: React.FC<UserCardProps> = (props) => {
-  const handleClick = (): void => {
-    props.onUserCardClick(props.user.id);
-  };
-
-  const cardStyles = `rounded-lg p-4 border-2 ${
-    props.isSelected ? "border-blue-500" : "border-gray-200"
-  }`;
-
+const UserCard: React.FC<UserCardProps> = ({ user, onClick, isSelected }) => {
   return (
-    <div className={cardStyles} onClick={handleClick}>
-      <h2 className="text-xl font-medium">{props.user.name}</h2>
+    <div onClick={onClick} className={`user-card ${isSelected ? 'selected' : ''}`}>
+      <p>{user.name}</p>
     </div>
   );
 };
