@@ -1,26 +1,66 @@
-import React from "react";
+import React, { useState } from "react";
+import UserCard from "./UserCard";
 import User, { IUser } from "./User";
+import "./styles.css";
 
-interface UserCardProps {
-  user: IUser;
-  isSelected: boolean;
-  onUserCardClick: (userId: number) => void;
-}
+const users: IUser[] = [
+  {
+    id: 1,
+    name: "John Doe",
+  },
+  {
+    id: 2,
+    name: "Jane Doe",
+  },
+  {
+    id: 3,
+    name: "Doe Doe",
+  },
+];
 
-const UserCard: React.FC<UserCardProps> = (props) => {
-  const handleClick = (): void => {
-    props.onUserCardClick(props.user.id);
+const App: React.FC = () => {
+  const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
+
+  const handleUserCardClick = (userId: number): void => {
+    const user = users.find((user) => user.id === userId);
+    if (user) {
+      if (user.id === selectedUser?.id) {
+        setSelectedUser(null);
+      } else {
+        setSelectedUser(user);
+      }
+    }
   };
 
-  const cardStyles = `rounded-lg p-4 border-2 ${
-    props.isSelected ? "border-blue-500" : "border-gray-200"
-  }`;
-
   return (
-    <div className={cardStyles} onClick={handleClick}>
-      <h2 className="text-xl font-medium">{props.user.name}</h2>
+    <div className="container">
+      <div>
+        {users.map((user) => (
+          <UserCard
+            user={user}
+            isSelected={user.id === selectedUser?.id}
+            onUserCardClick={handleUserCardClick}
+            key={user.id}
+          />
+        ))}
+      </div>{selectedUser && (
+        <UserDetailCard
+          user={selectedUser}
+          onClick={() => handleUserCardClick(selectedUser.id)}
+        />
+      )}
     </div>
   );
 };
 
-export default UserCard;
+const UserDetailCard: React.FC<{ user: IUser; onClick: () => void }> = (
+  props
+) => {
+  return (
+    <div className="rounded-lg p-4 mt-4 bg-gray-100" onClick={props.onClick}>
+      <h2 className="text-xl font-medium">{props.user.name} Details</h2>
+    </div>
+  );
+};
+
+export default App;
