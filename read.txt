@@ -1,39 +1,19 @@
-import React, { useState } from 'react';
-import User from './models/User';
-import UserCard from './components/UserCard';
-import UserDetail from './components/UserDetail';
-import './css/styles.css';
+import React from 'react';
+import User from '../models/User';
+import '../css/styles.css';
 
-const App: React.FC = () => {
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+interface UserCardProps {
+  user: User;
+  onClick: () => void;
+  isSelected: boolean;
+}
 
-  const users: User[] = [
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    // Add more users as needed
-  ];
-
-  const handleUserClick = (user: User) => {
-    setSelectedUser(selectedUser === user ? null : user);
-  };
-
+const UserCard: React.FC<UserCardProps> = ({ user, onClick, isSelected }) => {
   return (
-    <div className="app">
-      <div className="user-cards">
-        {users.map((user) => (
-          <UserCard
-            key={user.id}
-            user={user}
-            onClick={() => handleUserClick(user)}
-            isSelected={selectedUser === user}
-          />
-        ))}
-      </div>
-      <div className="user-detail">
-        {selectedUser && <UserDetail user={selectedUser} />}
-      </div>
+    <div onClick={onClick} className={`user-card ${isSelected ? 'selected' : ''}`}>
+      <p>{user.name}</p>
     </div>
   );
 };
 
-export default App;
+export default UserCard;
