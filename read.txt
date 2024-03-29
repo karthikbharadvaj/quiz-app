@@ -1,61 +1,12 @@
-import React, { useState } from "react";
-import UserCard from "./UserCard";
+import React from "react";
 import User, { IUser } from "./User";
-import "./styles.css";
 
-const users: IUser[] = [
-  {
-    id: 1,
-    name: "John Doe",
-  },
-  {
-    id: 2,
-    name: "Jane Doe",
-  },
-  {
-    id: 3,
-    name: "Doe Doe",
-  },
-];
+interface UserDetailCardProps {
+  user: IUser;
+  onClick: () => void;
+}
 
-const App: React.FC = () => {
-  const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
-
-  const handleUserCardClick = (userId: number): void => {
-    const user = users.find((user) => user.id === userId);
-    if (user) {
-      if (user.id === selectedUser?.id) {
-        setSelectedUser(null);
-      } else {
-        setSelectedUser(user);
-      }
-    }
-  };
-
-  return (
-    <div className="container">
-      <div>
-        {users.map((user) => (
-          <UserCard
-            user={user}
-            isSelected={user.id === selectedUser?.id}
-            onUserCardClick={handleUserCardClick}
-            key={user.id}
-          />
-        ))}
-      </div>{selectedUser && (
-        <UserDetailCard
-          user={selectedUser}
-          onClick={() => handleUserCardClick(selectedUser.id)}
-        />
-      )}
-    </div>
-  );
-};
-
-const UserDetailCard: React.FC<{ user: IUser; onClick: () => void }> = (
-  props
-) => {
+const UserDetailCard: React.FC<UserDetailCardProps> = (props) => {
   return (
     <div className="rounded-lg p-4 mt-4 bg-gray-100" onClick={props.onClick}>
       <h2 className="text-xl font-medium">{props.user.name} Details</h2>
@@ -63,4 +14,4 @@ const UserDetailCard: React.FC<{ user: IUser; onClick: () => void }> = (
   );
 };
 
-export default App;
+export default UserDetailCard;
