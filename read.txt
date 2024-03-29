@@ -1,19 +1,18 @@
 import React from 'react';
 import User from '../models/User';
-import '../css/styles.css';
 
-interface UserCardProps {
+interface UserDetailProps {
   user: User;
-  onClick: () => void;
-  isSelected: boolean;
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user, onClick, isSelected }) => {
+const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
   return (
-    <div onClick={onClick} className={`user-card ${isSelected ? 'selected' : ''}`}>
-      <p>{user.name}</p>
+    <div className="user-detail">
+      <h2>User Details</h2>
+      <p>Name: {user.name}</p>
+      {/* Add more details as needed */}
     </div>
   );
 };
 
-export default UserCard;
+export default UserDetail;
