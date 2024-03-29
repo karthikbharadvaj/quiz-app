@@ -1,18 +1,39 @@
-import React from 'react';
-import User from '../models/User';
+import React, { useState } from 'react';
+import User from './models/User';
+import UserCard from './components/UserCard';
+import UserDetail from './components/UserDetail';
+import './css/styles.css';
 
-interface UserDetailProps {
-  user: User;
-}
+const App: React.FC = () => {
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
+  const users: User[] = [
+    { id: 1, name: 'John Doe' },
+    { id: 2, name: 'Jane Smith' },
+    // Add more users as needed
+  ];
+
+  const handleUserClick = (user: User) => {
+    setSelectedUser(selectedUser === user ? null : user);
+  };
+
   return (
-    <div className="user-detail">
-      <h2>User Details</h2>
-      <p>Name: {user.name}</p>
-      {/* Add more details as needed */}
+    <div className="app">
+      <div className="user-cards">
+        {users.map((user) => (
+          <UserCard
+            key={user.id}
+            user={user}
+            onClick={() => handleUserClick(user)}
+            isSelected={selectedUser === user}
+          />
+        ))}
+      </div>
+      <div className="user-detail">
+        {selectedUser && <UserDetail user={selectedUser} />}
+      </div>
     </div>
   );
 };
 
-export default UserDetail;
+export default App;
