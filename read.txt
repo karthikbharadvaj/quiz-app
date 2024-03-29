@@ -17,3 +17,23 @@ const UserCard: React.FC<UserCardProps> = ({ user, onClick, isSelected }) => {
 };
 
 export default UserCard;
+
+
+import React from 'react';
+import { User } from '../user.model';
+
+interface UserCardProps {
+  user: User;
+  isSelected?: boolean; // Optional prop for selected state
+  onClick?: (user: User) => void; // Optional prop for click handler
+}
+
+const UserCard: React.FC<UserCardProps> = ({ user, isSelected, onClick }) => {
+  return (
+    <div className={`user-card ${isSelected ? 'selected' : ''}`} onClick={() => onClick && onClick(user)}>
+      {user.name}
+    </div>
+  );
+};
+
+export default UserCard;
