@@ -1,192 +1,36 @@
-describe('tradePage function', () => {
-  it('should change page when image is clicked', () => {
-    // Mock the global window object
-    global.window = { location: { href: null } };
-
-    // Render your component with the tradePage function
-    // Replace YourComponent with the component that contains the image
-    renderWithTradePage(<YourComponent />);
-
-    // Simulate a click event on the image
-    const image = screen.getByAltText('Your Image Alt Text');
-    userEvent.click(image);
-
-    // Advance timers
-    jest.advanceTimersByTime(100);
-
-    // Assert that the window location href contains the expected URL
-    expect(global.window.location.href).toContain('/new-url');
-  });
-});
-
------------------
-import React from 'react';
-import { renderWithProviderAndBrowserRouter } from './test-utils'; // custom function to render component with provider and BrowserRouter
-import userEvent from '@testing-library/user-event';
-
-describe('Logo', () => {
-  it('should disable the redirect function when session is timed out', () => {
-    const { container } = renderWithProviderAndBrowserRouter(<Logo isSessionTimedOut={true} />);
-
-    const logo = container.getElementsByClassName('logo')[0];
-    userEvent.click(logo);
-
-    // assuming there is a <Redirect> component that redirects to another page
-    const redirect = container.getElementsByClassName('redirect')[0];
-    expect(redirect).toBeTruthy();
-
-    // assuming there is a <button> component that is disabled when session is timed out
-    const button = container.getElementsByClassName('button')[0];
-    expect(button).toBeDisabled();
-  });
-});
-------------
-import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
-import { Provider } from 'react-redux'
-import { createStore } from 'redux'
-import logo from './logo' // replace with your actual logo component path
-import { sessionTimedOut } from './actions' // replace with your actual session timeout action
-
-const renderWithProvider = (
-  component: React.ReactElement,
-  { initialState, store = createStore(reducer, initialState) } = {}
-) => {
-  return {
-    ...render(<Provider store={store}><BrowserRouter>{component}</BrowserRouter></Provider>),
-    store,
-  }
+"scripts": {
+  "start": "ts-node-dev --transpileOnly server.ts",
+  "build": "tsc",
+  "serve": "node dist/server.js"
 }
 
-describe('logo', () => {
-  it('should disable the redirect function during session timeout', async () => {
-    const initialState = { session: { isTimedOut: true } }
-    renderWithProvider(<logo />, { initialState })
-
-    const logoElement = screen.getByRole('button', { name: /logo/i })
-    expect(logoElement).toBeInTheDocument()
-    expect(logoElement).toBeDisabled()
-
-    const store = renderWithProvider(<logo />, { initialState }).store
-    store.dispatch(sessionTimedOut(false))
-
-    await waitFor(() => expect(logoElement).not.toBeDisabled())
-  })
-})
-----------
-import React from 'react';
-import { renderWithProviderAndBrowserRouter } from './testUtils'; // Import your custom render function
-import userEvent from '@testing-library/user-event'; // Import userEvent
-import YourComponent from './YourComponent'; // Import your component
-
-describe('YourComponent', () => {
-  it('disables the logo redirect on click', () => {
-    // Render the component with provider and browser router
-    const { container } = renderWithProviderAndBrowserRouter(<YourComponent />);
-    
-    // Get the logo element
-    const logo = container.querySelector('.your-logo-class');
-
-    // Ensure that the logo element exists
-    expect(logo).not.toBeNull();
-
-    if (logo) {
-      // Simulate a click event on the logo using userEvent
-      userEvent.click(logo);
-      
-      // Assert that the logo redirect is disabled
-      expect(logo).toHaveAttribute('disabled');
-    } else {
-      // Fail the test if logo element is not found
-      fail('Logo element not found');
-    }
-  });
-});
-
-----------
-import React from 'react';
-import { render } from '@testing-library/react';
-
-interface Props {
-  sessionExpired: boolean;
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "rootDir": ".",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }
 
-const YourComponent: React.FC<Props> = ({ sessionExpired }) => {
+import express, { Request, Response, Application } from 'express';
+import dotenv from 'dotenv';
 
-  const handleImageClick = () => {
-    if (!sessionExpired) {
-      // Redirect logic here
-      window.location.href = '/your-redirect-url';
-    }
-  };
+dotenv.config();
 
-  return (
-    <div>
-      {/* Your component content */}
-      <img src="/path/to/image.png" alt="Your Image Alt Text" onClick={handleImageClick} />
-    </div>
-  );
-};
+const app: Application = express();
+const port = process.env.PORT || 3000;
 
-describe('YourComponent', () => {
-  it('disables the redirect link during session timeout', () => {
-    // Render the component with sessionExpired set to true
-    const { getByAltText } = render(<YourComponent sessionExpired={true} />);
-    
-    // Get the image element
-    const redirectImage = getByAltText('Your Image Alt Text');
-    
-    // Assert that the redirect link is disabled
-    expect(redirectImage).toHaveAttribute('disabled');
-  });
+app.get('/', (req: Request, res: Response) => {
+  res.send('Welcome to Express & TypeScript Server');
 });
 
-----------
-import React from 'react';
-import { render } from '@testing-library/react';
-import YourComponent from './YourComponent'; // Import your component
-
-describe('YourComponent', () => {
-  it('disables the image redirect during session timeout when isSimple is true', () => {
-    // Render the component with isSimple set to true
-    const { getByAltText } = render(<YourComponent isSimple={true} />);
-    
-    // Get the image element representing the redirect
-    const redirectImage = getByAltText('Your Image Alt Text');
-    
-    // Assert that the redirect image is disabled
-    expect(redirectImage).toHaveAttribute('disabled');
-  });
-
-  it('does not disable the image redirect during session timeout when isSimple is false', () => {
-    // Render the component with isSimple set to false
-    const { getByAltText } = render(<YourComponent isSimple={false} />);
-    
-    // Get the image element representing the redirect
-    const redirectImage = getByAltText('Your Image Alt Text');
-    
-    // Assert that the redirect image is not disabled
-    expect(redirectImage).not.toHaveAttribute('disabled');
-  });
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
 });
-
-*---------------1
-import React from 'react';
-import { render } from '@testing-library/react';
-import YourComponent from './YourComponent'; // Import your component
-
-describe('YourComponent', () => {
-  it('disables the redirect link during session timeout', () => {
-    // Render the component with sessionExpired set to true
-    const { getByAltText } = render(<YourComponent sessionExpired={true} />);
-    
-    // Get the image element
-    const redirectImage = getByAltText('Your Image Alt Text');
-    
-    // Assert that the redirect link is disabled
-    expect(redirectImage).toHaveAttribute('disabled');
-  });
-});
-
-
