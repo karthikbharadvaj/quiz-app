@@ -1,29 +1,26 @@
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+import React from "react";
+import User, { IUser } from "./User";
+
+interface UserCardProps {
+  user: IUser;
+  isSelected: boolean;
+  onUserCardClick: (userId: number) => void;
 }
 
-.rounded-lg {
-  border-radius: 0.5rem;
-}
+const UserCard: React.FC<UserCardProps> = (props) => {
+  const handleClick = (): void => {
+    props.onUserCardClick(props.user.id);
+  };
 
-.p-4 {
-  padding: 1rem;
-}
+  const cardStyles = `rounded-lg p-4 border-2 ${
+    props.isSelected ? "border-blue-500" : "border-gray-200"
+  }`;
 
-.border-gray-200 {
-  border-color: #d1d5db;
-}
+  return (
+    <div className={cardStyles} onClick={handleClick}>
+      <h2 className="text-xl font-medium">{props.user.name}</h2>
+    </div>
+  );
+};
 
-.border-blue-500 {
-  border-color: #0b74e4;
-}
-
-.text-xl {
-  font-size: 1.5rem;
-}
-
-.font-medium {
-  font-weight: 500;
-}
+export default UserCard;
