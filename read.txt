@@ -1,46 +1,29 @@
-import React, { useState } from "react";
-import UserCard from "./UserCard";
-import User, { IUser } from "./User";
-import "./styles.css";
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
 
-const users: IUser[] = [
-  {
-    id: 1,
-    name: "John Doe",
-  },
-  {
-    id: 2,
-    name: "Jane Doe",
-  },
-  {
-    id: 3,
-    name: "Doe Doe",
-  },
-];
+.rounded-lg {
+  border-radius: 0.5rem;
+}
 
-const App: React.FC = () => {
-  const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
+.p-4 {
+  padding: 1rem;
+}
 
-  const handleUserCardClick = (userId: number): void => {
-    const user = users.find((user) => user.id === userId);
-    if (user) {
-      if (user.id === selectedUser?.id) {
-        setSelectedUser(null);
-      } else {
-        setSelectedUser(user);
-      }
-    }
-  };
+.border-gray-200 {
+  border-color: #d1d5db;
+}
 
-  return (
-    <div className="container">
-      <div>
-        {users.map((user) => (
-          <UserCard
-            user={user}
-            isSelected={user.id === selectedUser?.id}
-            onUserCardClick={handleUserCardClick}
-            key={user.id}
-          />
-        ))}
-      </div>
+.border-blue-500 {
+  border-color: #0b74e4;
+}
+
+.text-xl {
+  font-size: 1.5rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
