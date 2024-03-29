@@ -1,36 +1,19 @@
-"scripts": {
-  "start": "ts-node-dev --transpileOnly server.ts",
-  "build": "tsc",
-  "serve": "node dist/server.js"
+import React from 'react';
+import User from '../models/User';
+import '../css/styles.css';
+
+interface UserCardProps {
+  user: User;
+  onClick: () => void;
+  isSelected: boolean;
 }
 
-{
-  "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "rootDir": ".",
-    "outDir": "dist",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": ["src"],
-  "exclude": ["node_modules"]
-}
+const UserCard: React.FC<UserCardProps> = ({ user, onClick, isSelected }) => {
+  return (
+    <div onClick={onClick} className={`user-card ${isSelected ? 'selected' : ''}`}>
+      <p>{user.name}</p>
+    </div>
+  );
+};
 
-import express, { Request, Response, Application } from 'express';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const app: Application = express();
-const port = process.env.PORT || 3000;
-
-app.get('/', (req: Request, res: Response) => {
-  res.send('Welcome to Express & TypeScript Server');
-});
-
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+export default UserCard;
