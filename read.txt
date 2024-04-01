@@ -1,34 +1,20 @@
-import React, { useState } from 'react';
-import UserCard from './components/UserCard';
+typescript
+// UserCard.tsx
+import React from 'react';
+import User from './User';
 
-const users: User[] = [
-  { id: 1, name: 'John Doe' },
-  { id: 2, name: 'Jane Smith' },
-  { id: 3, name: 'Mike Wilson' },
-];
+interface UserCardProps {
+  user: User;
+  isSelected: boolean;
+  onClick: () => void;
+}
 
-const App: React.FC = () => {
-  const [selectedUser, setSelectedUser] = useState<User | null>(null); // state for selected user
-
-  const handleUserClick = (user: User) => {
-    setSelectedUser(user === selectedUser ? null : user); // toggle selected state
-  };
-
+const UserCard: React.FC<UserCardProps> = ({ user, isSelected, onClick }) => {
   return (
-    <div className="App">
-      <h1>User Cards</h1>
-      {users.map((user) => (
-        <UserCard
-          key={user.id} // key prop for efficient rendering
-          user={user}
-          isSelected={user === selectedUser}
-          onClick={handleUserClick}
-        />
-      ))}
-      {/* User Detail Section */}
-      {selectedUser && <UserDetail user={selectedUser} />}
+    <div className={`user-card ${isSelected ? 'selected' : ''}`} onClick={onClick}>
+      <h3>{user.name}</h3>
     </div>
   );
-};
+}
 
-export default App;
+export default UserCard;
