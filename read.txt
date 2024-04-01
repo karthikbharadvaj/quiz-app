@@ -1,11 +1,24 @@
-/* styles.css */
-.user-card {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin: 5px;
-  cursor: pointer;
+tsx
+// src/UserDetail.tsx
+
+import React from 'react';
+import { User } from './User';
+
+interface UserDetailProps {
+  user: User | null;
 }
 
-.user-card.selected {
-  border: 2px solid blue;
-}
+const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="user-detail">
+      <h2>{user.name}</h2>
+      {/* Add other user details */}
+    </div>
+  );
+};
+
+export default UserDetail;
