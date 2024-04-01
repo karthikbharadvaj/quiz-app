@@ -1,43 +1,29 @@
-tsx
-// src/UserDetail.tsx
+typescript
+// routes.ts
 
-import React from 'react';
-import { User } from './User';
+import express, { Request, Response } from 'express';
+import { users, userDetails, UserDetails } from './users';
 
-interface UserDetailProps {
-  user: User | null;
-}
+const app = express();
 
-const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
-  if (!user) {
-    return null;
+app.get('/users', (req: Request, res: Response) => {
+  res.json(users);
+});
+
+app.get('/users/:id', (req: Request, res: Response) => {
+  const userId = parseInt(req.params.id);
+  const user = users.find(user => user.id === userId);
+
+  if (user) {
+    const userDetail = userDetails[userId];
+    if (userDetail) {
+      res.json(userDetail);
+    } else {
+      res.status(404).json({ message: 'User details not found' });
+    }
+  } else {
+    res.status(404).json({ message: 'User not found' });
   }
+});
 
-  return (
-    <div className="user-detail">
-      <h2>{user.name}</h2>
-      {/* Add other user details */}
-    </div>
-  );
-};
-
-export default UserDetail;
-
-/* src/index.css */
-
-.user-card {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
-.user-card.selected {
-  background-color: #f0f0f0;
-}
-
-.user-detail {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-top: 10px;
-}
+export default app;
