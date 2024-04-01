@@ -1,29 +1,18 @@
 typescript
-// routes.ts
+// src/usersRepository.ts
 
-import express, { Request, Response } from 'express';
-import { users, userDetails, UserDetails } from './users';
-
-const app = express();
-
-app.get('/users', (req: Request, res: Response) => {
-  res.json(users);
-});
-
-app.get('/users/:id', (req: Request, res: Response) => {
-  const userId = parseInt(req.params.id);
-  const user = users.find(user => user.id === userId);
-
-  if (user) {
-    const userDetail = userDetails[userId];
-    if (userDetail) {
-      res.json(userDetail);
-    } else {
-      res.status(404).json({ message: 'User details not found' });
-    }
-  } else {
-    res.status(404).json({ message: 'User not found' });
+export async function fetchUsers(): Promise<User[]> {
+  const response = await fetch('/user');
+  if (!response.ok) {
+    throw new Error('Failed to fetch users');
   }
-});
+  return response.json();
+}
 
-export default app;
+export async function fetchUserDetails(userId: number): Promise<UserDetails> {
+  const response = await fetch(`/user/details/${userId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch user details');
+  }
+  return response.json();
+}
