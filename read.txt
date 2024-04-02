@@ -1,59 +1,30 @@
 tsx
-// src/App.tsx
+// src/hooks/useCachedUserDetails.ts
 
-import React, { useState, useEffect } from 'react';
-import UserCard from './UserCard';
-import UserDetail from './UserDetail';
-import { User, UserDetails } from './User';
-import { fetchUsers } from './usersRepository';
+import { useEffect, useState } from 'react';
+import { UserDetails } from '../models/User';
+import { fetchUserDetails } from '../repositories/usersRepository';
 
-const App: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+export function useCachedUserDetails(userId: number): [UserDetails | null, () => void] {
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      try {
-        const fetchedUsers = await fetchUsers();
-        setUsers(fetchedUsers);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  const handleUserSelect = (user: User) => {
-    setSelectedUser(user);
+  const refreshUserDetails = async () => {
+    setIsLoading(true);
+    try {
+      const fetchedUserDetails = await fetchUserDetails(userId);
+      setUserDetails(fetchedUserDetails);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  return (
-    <div className="app">
-      <div className="user-cards">
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : error ? (
-          <p>Error: {error}</p>
-        ) : (
-          users.map((user) => (
-            <UserCard
-              key={user.id}
-              user={user}
-              isSelected={selectedUser === user}
-              onSelect={() => handleUserSelect(user)}
-            />
-          ))
-        )}
-      </div>
-      <UserDetail user={selectedUser} />
-    </div>
-  );
-};
+  useEffect(() => {
+    refreshUserDetails();
+  }, []);
 
-export default App;
+  return [userDetails, refreshUserDetails];
+}
