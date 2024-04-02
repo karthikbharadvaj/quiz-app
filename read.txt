@@ -1,24 +1,30 @@
 tsx
-// src/components/UserDetail.tsx
+// src/hooks/useCachedUserDetail.ts
 
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { User } from '../models/User';
+import { fetchUserDetails } from '../repositories/usersRepository';
 
-interface UserDetailProps {
-  user: User | null;
+export function useCachedUserDetail(userId: number): [User | null, () => void] {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refreshUserDetail = async () => {
+    setIsLoading(true);
+    try {
+      const userDetails = await fetchUserDetails(userId);
+      setUser(userDetails);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshUserDetail();
+  }, []);
+
+  return [user, refreshUserDetail];
 }
-
-const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
-  if (!user) {
-    return null;
-  }
-
-  return (
-    <div className="user-detail">
-      <h2>{user.name}</h2>
-      {/* Display other user details */}
-    </div>
-  );
-};
-
-export default UserDetail;
