@@ -1,71 +1,24 @@
 tsx
-// src/components/App.tsx
+// src/components/UserCard.tsx
 
-import React, { useEffect, useState } from 'react';
-import UserCard from './UserCard';
-import UserDetail from './UserDetail';
+import React from 'react';
 import { User } from '../models/User';
-import { fetchUsers, fetchUserDetails } from '../repositories/usersRepository';
 
-const App: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+interface UserCardProps {
+  user: User;
+  isSelected: boolean;
+  onSelect: () => void;
+}
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      try {
-        const fetchedUsers = await fetchUsers();
-        setUsers(fetchedUsers);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  const handleUserSelect = async (user: User) => {
-    if (selectedUser === user) {
-      setSelectedUser(null);
-    } else {
-      setIsLoading(true);
-      try {
-        const userDetails = await fetchUserDetails(user.id);
-        setSelectedUser(userDetails);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
+const UserCard: React.FC<UserCardProps> = ({ user, isSelected, onSelect }) => {
   return (
-    <div className="app">
-      <div className="user-cards">
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : error ? (
-          <p>Error: {error}</p>
-        ) : (
-          users.map((user) => (
-            <UserCard
-              key={user.id}
-              user={user}
-              isSelected={selectedUser === user}
-              onSelect={() => handleUserSelect(user)}
-            />
-          ))
-        )}
-      </div>
-      <UserDetail user={selectedUser} />
+    <div
+      className={`user-card ${isSelected ? 'selected' : ''}`}
+      onClick={onSelect}
+    >
+      <h2>{user.name}</h2>
     </div>
   );
 };
 
-export default App;
+export default UserCard;
