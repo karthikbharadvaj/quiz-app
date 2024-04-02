@@ -1,18 +1,59 @@
-typescript
-// src/usersRepository.ts
+tsx
+// src/App.tsx
 
-export async function fetchUsers(): Promise<User[]> {
-  const response = await fetch('/user');
-  if (!response.ok) {
-    throw new Error('Failed to fetch users');
-  }
-  return response.json();
-}
+import React, { useState, useEffect } from 'react';
+import UserCard from './UserCard';
+import UserDetail from './UserDetail';
+import { User, UserDetails } from './User';
+import { fetchUsers } from './usersRepository';
 
-export async function fetchUserDetails(userId: number): Promise<UserDetails> {
-  const response = await fetch(`/user/details/${userId}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch user details');
-  }
-  return response.json();
-}
+const App: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedUsers = await fetchUsers();
+        setUsers(fetchedUsers);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user);
+  };
+
+  return (
+    <div className="app">
+      <div className="user-cards">
+        {isLoading ? (
+          <p>Loading...</p>
+        ) : error ? (
+          <p>Error: {error}</p>
+        ) : (
+          users.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              isSelected={selectedUser === user}
+              onSelect={() => handleUserSelect(user)}
+            />
+          ))
+        )}
+      </div>
+      <UserDetail user={selectedUser} />
+    </div>
+  );
+};
+
+export default App;
