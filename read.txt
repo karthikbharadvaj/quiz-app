@@ -1,24 +1,24 @@
 tsx
-// src/components/UserCard.tsx
+// src/components/UserDetail.tsx
 
 import React from 'react';
 import { User } from '../models/User';
 
-interface UserCardProps {
-  user: User;
-  isSelected: boolean;
-  onSelect: () => void;
+interface UserDetailProps {
+  user: User | null;
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user, isSelected, onSelect }) => {
+const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div
-      className={`user-card ${isSelected ? 'selected' : ''}`}
-      onClick={onSelect}
-    >
+    <div className="user-detail">
       <h2>{user.name}</h2>
+      {/* Display other user details */}
     </div>
   );
 };
 
-export default UserCard;
+export default UserDetail;
