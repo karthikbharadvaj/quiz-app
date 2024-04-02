@@ -1,30 +1,40 @@
 tsx
-// src/hooks/useCachedUserDetails.ts
+// src/components/UserDetail.tsx
 
-import { useEffect, useState } from 'react';
-import { UserDetails } from '../models/User';
-import { fetchUserDetails } from '../repositories/usersRepository';
+tsx
+// src/components/UserDetail.tsx
 
-export function useCachedUserDetails(userId: number): [UserDetails | null, () => void] {
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+import React from 'react';
+import { User } from '../models/User';
+import { useCachedUserDetails } from '../hooks/useCachedUserDetails';
 
-  const refreshUserDetails = async () => {
-    setIsLoading(true);
-    try {
-      const fetchedUserDetails = await fetchUserDetails(userId);
-      setUserDetails(fetchedUserDetails);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    refreshUserDetails();
-  }, []);
-
-  return [userDetails, refreshUserDetails];
+interface UserDetailProps {
+  user: User | null;
 }
+
+const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
+  const [userDetails, refreshUserDetails] = useCachedUserDetails(user?.id || 0);
+
+  if (!userDetails) {
+    return null;
+  }
+
+  return (
+    <div className="user-detail">
+      <h2>{userDetails.name}</h2>
+      <p>Hobby: {userDetails.hobby}</p>
+      <p>Age: {userDetails.age}</p>
+      <p>Country: {userDetails.country}</p>
+      <p>Languages: {userDetails.languages.join(', ')}</p>
+      {isLoading ? (
+        <p>Loading user details...</p>
+      ) : error ? (
+        <p>Error: {error}</p>
+      ) : (
+        <button onClick={refreshUserDetails}>Refresh</button>
+      )}
+    </div>
+  );
+};
+
+export default UserDetail;
