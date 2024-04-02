@@ -1,30 +1,20 @@
-tsx
-// src/hooks/useCachedUserDetail.ts
+typescript
+// backend/src/controllers/usersController.ts
 
-import { useEffect, useState } from 'react';
-import { User } from '../models/User';
-import { fetchUserDetails } from '../repositories/usersRepository';
+import { Request, Response } from 'express';
+import { userDetails, users } from '../utils/data';
 
-export function useCachedUserDetail(userId: number): [User | null, () => void] {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+export const getUsers = (req: Request, res: Response): void => {
+  res.json(users);
+};
 
-  const refreshUserDetail = async () => {
-    setIsLoading(true);
-    try {
-      const userDetails = await fetchUserDetails(userId);
-      setUser(userDetails);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export const getUserDetails = (req: Request, res: Response): void => {
+  const userId = parseInt(req.params.id);
+  const userDetail = userDetails[userId];
 
-  useEffect(() => {
-    refreshUserDetail();
-  }, []);
-
-  return [user, refreshUserDetail];
-}
+  if (userDetail) {
+    res.json(userDetail);
+  } else {
+    res.status(404).json({ error: 'User not found' });
+  }
+};
