@@ -1,40 +1,15 @@
-tsx
-// src/components/UserDetail.tsx
-
-tsx
-// src/components/UserDetail.tsx
-
-import React from 'react';
-import { User } from '../models/User';
-import { useCachedUserDetails } from '../hooks/useCachedUserDetails';
-
-interface UserDetailProps {
-  user: User | null;
-}
-
-const UserDetail: React.FC<UserDetailProps> = ({ user }) => {
-  const [userDetails, refreshUserDetails] = useCachedUserDetails(user?.id || 0);
-
-  if (!userDetails) {
-    return null;
-  }
-
-  return (
-    <div className="user-detail">
-      <h2>{userDetails.name}</h2>
-      <p>Hobby: {userDetails.hobby}</p>
-      <p>Age: {userDetails.age}</p>
-      <p>Country: {userDetails.country}</p>
-      <p>Languages: {userDetails.languages.join(', ')}</p>
-      {isLoading ? (
-        <p>Loading user details...</p>
-      ) : error ? (
-        <p>Error: {error}</p>
-      ) : (
-        <button onClick={refreshUserDetails}>Refresh</button>
-      )}
-    </div>
-  );
-};
-
-export default UserDetail;
+  const handleUserSelect = async (user: User) => {
+    if (selectedUser === user) {
+      setSelectedUser(null);
+    } else {
+      setIsLoading(true);
+      try {
+        const userDetails = await fetchUserDetails(user.id);
+        setSelectedUser(userDetails);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
