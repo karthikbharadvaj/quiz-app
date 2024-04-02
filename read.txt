@@ -1,20 +1,12 @@
 typescript
-// backend/src/controllers/usersController.ts
+// backend/src/routes/usersRoutes.ts
 
-import { Request, Response } from 'express';
-import { userDetails, users } from '../utils/data';
+import express from 'express';
+import { getUsers, getUserDetails } from '../controllers/usersController';
 
-export const getUsers = (req: Request, res: Response): void => {
-  res.json(users);
-};
+const router = express.Router();
 
-export const getUserDetails = (req: Request, res: Response): void => {
-  const userId = parseInt(req.params.id);
-  const userDetail = userDetails[userId];
+router.get('/', getUsers);
+router.get('/details/:id', getUserDetails);
 
-  if (userDetail) {
-    res.json(userDetail);
-  } else {
-    res.status(404).json({ error: 'User not found' });
-  }
-};
+export default router;
