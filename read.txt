@@ -1,12 +1,3 @@
-typescript
-// backend/src/routes/usersRoutes.ts
+app.use(express.json());
 
-import express from 'express';
-import { getUsers, getUserDetails } from '../controllers/usersController';
-
-const router = express.Router();
-
-router.get('/', getUsers);
-router.get('/details/:id', getUserDetails);
-
-export default router;
+app.use('/user', usersRoutes);
