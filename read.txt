@@ -1,16 +1,40 @@
 tsx
-// src/store/store.ts
+// src/components/App.tsx
 
-import { configureStore } from '@reduxjs/toolkit';
-import { setupListeners } from '@reduxjs/toolkit/query/react';
-import { api } from './api';
+import React from 'react';
+import { useUsersQuery, useUserDetailsQuery } from '../store/api';
+import UserCard from './UserCard';
+import UserDetail from './UserDetail';
 
-export const store = configureStore({
-  reducer: {
-    [api.reducerPath]: api.reducer,
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware),
-});
+const App: React.FC = () => {
+  const { data: users, isLoading: isUsersLoading, error: usersError } = useUsersQuery();
+  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError } = useUserDetailsQuery();
 
-setupListeners(store.dispatch);
+  const handleUserSelect = (userId: number) => {
+    userDetails.refetch({ userId });
+  };
+
+  return (
+    <div className="app">
+      <div className="user-cards">
+        {isUsersLoading ? (
+          <p>Loading users...</p>
+        ) : usersError ? (
+          <p>Error: {usersError.message}</p>
+        ) : (
+          users?.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              isSelected={userDetails.data?.id === user.id}
+              onSelect={() => handleUserSelect(user.id)}
+            />
+          ))
+        )}
+      </div>
+      <UserDetail user={userDetails.data} isLoading={isUserDetailsLoading} error={userDetailsError} />
+    </div>
+  );
+};
+
+export default App;
