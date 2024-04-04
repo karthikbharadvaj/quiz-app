@@ -1,17 +1,33 @@
 tsx
-// src/components/App.tsx
-
-import React from 'react';
-import { useUsersQuery, useUserDetailsQuery } from '../store/api';
-import UserCard from './UserCard';
-import UserDetail from './UserDetail';
+import React, { useEffect, useState } from 'react';
+import UserCard from './components/UserCard';
+import UserDetail from './components/UserDetail';
+import { useUsersQuery, useUserDetailsQuery } from './store/api';
+import { User } from './models/User';
 
 const App: React.FC = () => {
-  const { data: users, isLoading: isUsersLoading, error: usersError } = useUsersQuery();
-  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError } = useUserDetailsQuery();
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const handleUserSelect = (userId: number) => {
-    userDetails.refetch({ userId });
+  const { data: users, isLoading: isUsersLoading, error: usersError } = useUsersQuery();
+  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError, refetch: refetchUserDetails } = useUserDetailsQuery();
+
+  useEffect(() => {
+    if (usersError) {
+      // Handle error if needed
+    }
+  }, [usersError]);
+
+  const handleUserSelect = async (user: User) => {
+    if (selectedUser === user) {
+      setSelectedUser(null);
+    } else {
+      try {
+        const userDetails = await refetchUserDetails(user.id);
+        setSelectedUser(userDetails);
+      } catch (error) {
+        // Handle error if needed
+      }
+    }
   };
 
   return (
@@ -26,13 +42,13 @@ const App: React.FC = () => {
             <UserCard
               key={user.id}
               user={user}
-              isSelected={userDetails.data?.id === user.id}
-              onSelect={() => handleUserSelect(user.id)}
+              isSelected={selectedUser === user}
+              onSelect={() => handleUserSelect(user)}
             />
           ))
         )}
       </div>
-      <UserDetail user={userDetails.data} isLoading={isUserDetailsLoading} error={userDetailsError} />
+      <UserDetail user={selectedUser} isLoading={isUserDetailsLoading} error={userDetailsError} />
     </div>
   );
 };
