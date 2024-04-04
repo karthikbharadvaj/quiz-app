@@ -1,3 +1,16 @@
+typescript
+// backend/src/server.ts
+
+import express from 'express';
+import usersRoutes from './routes/usersRoutes';
+
+const app = express();
+const port = 3000;
+
 app.use(express.json());
 
 app.use('/user', usersRoutes);
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
