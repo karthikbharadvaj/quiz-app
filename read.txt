@@ -1,16 +1,40 @@
-typescript
-// backend/src/server.ts
+tsx
+// src/components/App.tsx
 
-import express from 'express';
-import usersRoutes from './routes/usersRoutes';
+import React from 'react';
+import { useUsersQuery, useUserDetailsQuery } from '../store/api';
+import UserCard from './UserCard';
+import UserDetail from './UserDetail';
 
-const app = express();
-const port = 3000;
+const App: React.FC = () => {
+  const { data: users, isLoading: isUsersLoading, error: usersError } = useUsersQuery();
+  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError } = useUserDetailsQuery();
 
-app.use(express.json());
+  const handleUserSelect = (userId: number) => {
+    userDetails.refetch(userId);
+  };
 
-app.use('/user', usersRoutes);
+  return (
+    <div className="app">
+      <div className="user-cards">
+        {isUsersLoading ? (
+          <p>Loading users...</p>
+        ) : usersError ? (
+          <p>Error: {usersError.message}</p>
+        ) : (
+          users?.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              isSelected={userDetails.data?.id === user.id}
+              onSelect={() => handleUserSelect(user.id)}
+            />
+          ))
+        )}
+      </div>
+      <UserDetail user={userDetails.data} isLoading={isUserDetailsLoading} error={userDetailsError} />
+    </div>
+  );
+};
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+export default App;
