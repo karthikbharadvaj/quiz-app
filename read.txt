@@ -1,54 +1,42 @@
-tsx
 import React, { useEffect, useState } from 'react';
+import { useGetUsersQuery, useGetUserByIdQuery } from './services/usersApi';
 import UserCard from './components/UserCard';
 import UserDetail from './components/UserDetail';
-import { useUsersQuery, useUserDetailsQuery } from './store/api';
-import { User } from './models/User';
 
 const App: React.FC = () => {
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const { data: users, isLoading: isUsersLoading, error: usersError } = useGetUsersQuery();
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError } = useGetUserByIdQuery(selectedUser || 0);
 
-  const { data: users, isLoading: isUsersLoading, error: usersError } = useUsersQuery();
-  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError, refetch: refetchUserDetails } = useUserDetailsQuery();
-
-  useEffect(() => {
-    if (usersError) {
-      // Handle error if needed
-    }
-  }, [usersError]);
-
-  const handleUserSelect = async (user: User) => {
-    if (selectedUser === user) {
-      setSelectedUser(null);
-    } else {
-      try {
-        const userDetails = await refetchUserDetails(user.id);
-        setSelectedUser(userDetails);
-      } catch (error) {
-        // Handle error if needed
-      }
-    }
+  const handleUserSelect = (userId: number) => {
+    setSelectedUser(userId === selectedUser ? null : userId);
   };
 
   return (
     <div className="app">
       <div className="user-cards">
         {isUsersLoading ? (
-          <p>Loading users...</p>
+          <p>Loading...</p>
         ) : usersError ? (
           <p>Error: {usersError.message}</p>
         ) : (
-          users?.map((user) => (
+          users.map((user) => (
             <UserCard
               key={user.id}
               user={user}
-              isSelected={selectedUser === user}
-              onSelect={() => handleUserSelect(user)}
+              isSelected={selectedUser === user.id}
+              onSelect={() => handleUserSelect(user.id)}
             />
           ))
         )}
       </div>
-      <UserDetail user={selectedUser} isLoading={isUserDetailsLoading} error={userDetailsError} />
+      {isUserDetailsLoading ? (
+        <p>Loading user details...</p>
+      ) : userDetailsError ? (
+        <p>Error: {userDetailsError.message}</p>
+      ) : (
+        <UserDetail user={userDetails} />
+      )}
     </div>
   );
 };
