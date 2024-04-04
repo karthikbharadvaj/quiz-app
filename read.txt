@@ -1,16 +1,20 @@
 tsx
-// src/store/store.ts
+// src/store/api.ts
 
-import { configureStore } from '@reduxjs/toolkit';
-import { setupListeners } from '@reduxjs/toolkit/query/react';
-import { api } from './api';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { User } from '../models/User';
 
-export const store = configureStore({
-  reducer: {
-    [api.reducerPath]: api.reducer,
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware),
+export const api = createApi({
+  reducerPath: 'api',
+  baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+  endpoints: (builder) => ({
+    users: builder.query<User[], void>({
+      query: () => 'user',
+    }),
+    userDetails: builder.query<User, number>({
+      query: (userId) => `user/details/${userId}`,
+    }),
+  }),
 });
 
-setupListeners(store.dispatch);
+export const { useUsersQuery, useUserDetailsQuery } = api;
