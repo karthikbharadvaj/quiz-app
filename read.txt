@@ -1,53 +1,40 @@
-import React, { useEffect, useState } from 'react';
-import { useGetUsersQuery, useGetUserByIdQuery } from './services/usersApi';
-import UserCard from './components/UserCard';
-import UserDetail from './components/UserDetail';
-
 const App: React.FC = () => {
-  const { data: users, isLoading: isUsersLoading, error: usersError, refetch: refetchUsers } = useGetUsersQuery();
+  const { data: users, isLoading: isUsersLoading, error: usersError } = useGetUsersQuery();
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError, refetch: refetchUserDetails } = useGetUserByIdQuery(selectedUser || 0);
+  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError } = useGetUserByIdQuery(selectedUser || 0);
 
   const handleUserSelect = (userId: number) => {
     setSelectedUser(userId === selectedUser ? null : userId);
   };
 
-  const handleUserDetailsRefresh = () => {
-    if (selectedUser) {
-      refetchUserDetails(selectedUser);
-    }
-  };
-
   return (
-    <div className="app">
-      <div className="user-cards">
-        {isUsersLoading ? (
-          <p>Loading...</p>
-        ) : usersError ? (
-          <p>Error: {usersError.message}</p>
+    <Provider store={store}>
+      <div className="app">
+        <div className="user-cards">
+          {isUsersLoading ? (
+            <p>Loading...</p>
+          ) : usersError ? (
+            <p>Error: {usersError.message}</p>
+          ) : (
+            users && users.map((user) => (
+              <UserCard
+                key={user.id}
+                user={user}
+                isSelected={selectedUser === user.id}
+                onSelect={() => handleUserSelect(user.id)}
+              />
+            ))
+          )}
+        </div>
+        {isUserDetailsLoading ? (
+          <p>Loading user details...</p>
+        ) : userDetailsError ? (
+          <p>Error: {userDetailsError.message}</p>
         ) : (
-          users.map((user) => (
-            <UserCard
-              key={user.id}
-              user={user}
-              isSelected={selectedUser === user.id}
-              onSelect={() => handleUserSelect(user.id)}
-            />
-          ))
-        )}
-        <button onClick={() => refetchUsers()}>Refresh Users</button>
-      </div>
-      {isUserDetailsLoading ? (
-        <p>Loading user details...</p>
-      ) : userDetailsError ? (
-        <p>Error: {userDetailsError.message}</p>
-      ) : (
-        <>
           <UserDetail user={userDetails} />
-          <button onClick={handleUserDetailsRefresh}>Refresh User Details</button>
-        </>
-      )}
-    </div>
+        )}
+      </div>
+    </Provider>
   );
 };
 
