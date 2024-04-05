@@ -14,12 +14,31 @@ header {
   align-items: center;
 }
 
+.logo {
+  display: flex; /* Use flexbox for logo container */
+  align-items: center; /* Align items vertically */
+}
+
 .logo img {
   width: 50px; /* Adjust logo size */
+  margin-right: 10px; /* Add margin for spacing between logo and title */
 }
 
 h1, h2 {
   margin: 0;
+  padding: 0;
+  text-align: center; /* Center align the text */
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 5px); /* Adjust distance from h1 to h2 */
+  width: 1px; /* Line width */
+  height: 50%;
+  background-color: #fff; /* Line color */
+  transform: translateY(-50%);
 }
 
 main {
@@ -35,12 +54,14 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  justify-content: center; /* Center align the user cards */
 }
 
 .user-card {
   background-color: #f9f9f9; /* User card background color */
   padding: 10px;
   border-radius: 5px;
+  text-align: center; /* Center align the text */
 }
 
 .divider {
@@ -50,6 +71,7 @@ main {
 
 .user-details {
   /* User details styling */
+  text-align: center; /* Center align the text */
 }
 
 .reload-button {
@@ -57,7 +79,7 @@ main {
   border: none;
   color: white;
   padding: 10px 20px;
-  text-align: center;
+  text-align: center; /* Center align the text */
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
