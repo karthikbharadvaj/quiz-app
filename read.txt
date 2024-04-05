@@ -1,40 +1,101 @@
-const App: React.FC = () => {
-  const { data: users, isLoading: isUsersLoading, error: usersError } = useGetUsersQuery();
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError } = useGetUserByIdQuery(selectedUser || 0);
+tsx
+// src/components/UserDetail.tsx
 
-  const handleUserSelect = (userId: number) => {
-    setSelectedUser(userId === selectedUser ? null : userId);
+import React from 'react';
+import { User } from '../models/User';
+
+interface UserDetailProps {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  onReload: () => void;
+}
+
+const UserDetail: React.FC<UserDetailProps> = ({ user, isLoading, error, onReload }) => {
+  return (
+    <div className="user-detail">
+      {isLoading ? (
+        <p>Loading user details...</p>
+      ) : error ? (
+        <div>
+          <p>Error: {error}</p>
+          <button onClick={onReload}>Reload</button>
+        </div>
+      ) : user ? (
+        <div>
+          <h2>User Details</h2>
+          <p>ID: {user.id}</p>
+          <p>Name: {user.name}</p>
+          <button onClick={onReload}>Reload</button>
+        </div>
+      ) : (
+        <p>No user selected</p>
+      )}
+    </div>
+  );
+};
+
+export default UserDetail;
+tsx
+// src/components/App.tsx
+
+import React, { useEffect, useState } from 'react';
+import UserCard from './components/UserCard';
+import UserDetail from './components/UserDetail';
+import { useUsersQuery, useUserDetailsQuery } from './store/api';
+import { User } from './models/User';
+
+const App: React.FC = () => {
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const { data: users, isLoading: isUsersLoading, error: usersError } = useUsersQuery();
+  const { data: userDetails, isLoading: isUserDetailsLoading, error: userDetailsError, refetch: refetchUserDetails } = useUserDetailsQuery();
+
+  useEffect(() => {
+    if (usersError) {
+      // Handle error if needed
+    }
+  }, [usersError]);
+
+  const handleUserSelect = async (user: User) => {
+    if (selectedUser === user) {
+      setSelectedUser(null);
+    } else {
+      try {
+        const userDetails = await refetchUserDetails(user.id);
+        setSelectedUser(userDetails);
+      } catch (error) {
+        // Handle error if needed
+      }
+    }
+  };
+
+  const handleReloadUserDetails = () => {
+    if (selectedUser) {
+      refetchUserDetails(selectedUser.id);
+    }
   };
 
   return (
-    <Provider store={store}>
-      <div className="app">
-        <div className="user-cards">
-          {isUsersLoading ? (
-            <p>Loading...</p>
-          ) : usersError ? (
-            <p>Error: {usersError.message}</p>
-          ) : (
-            users && users.map((user) => (
-              <UserCard
-                key={user.id}
-                user={user}
-                isSelected={selectedUser === user.id}
-                onSelect={() => handleUserSelect(user.id)}
-              />
-            ))
-          )}
-        </div>
-        {isUserDetailsLoading ? (
-          <p>Loading user details...</p>
-        ) : userDetailsError ? (
-          <p>Error: {userDetailsError.message}</p>
+    <div className="app">
+      <div className="user-cards">
+        {isUsersLoading ? (
+          <p>Loading users...</p>
+        ) : usersError ? (
+          <p>Error: {usersError.message}</p>
         ) : (
-          <UserDetail user={userDetails} />
+          users?.map((user) => (
+            <UserCard
+              key={user.id}
+              user={user}
+              isSelected={selectedUser === user}
+              onSelect={() => handleUserSelect(user)}
+            />
+          ))
         )}
       </div>
-    </Provider>
+      <UserDetail user={selectedUser} isLoading={isUserDetailsLoading} error={userDetailsError} onReload={handleReloadUserDetails} />
+    </div>
   );
 };
 
