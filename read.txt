@@ -1,94 +1,12 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f0f0f0; /* Background color */
-}
 
-header {
-  background-color: #333; /* Header background color */
-  color: #fff; /* Text color */
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  const refreshUserDetail = async () => {
+    if (userId) {
+      const fetchedUser = await fetchUserDetail(userId);
+      setUserDetail(fetchedUser);
+    }
+  };
 
-.logo {
-  display: flex; /* Use flexbox for logo container */
-  align-items: center; /* Align items vertically */
-}
+  return { userDetail, refreshUserDetail };
+};
 
-.logo img {
-  width: 50px; /* Adjust logo size */
-  margin-right: 10px; /* Add margin for spacing between logo and title */
-}
-
-h1, h2 {
-  margin: 0;
-  padding: 0;
-  text-align: center; /* Center align the text */
-}
-
-h1::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: calc(100% + 5px); /* Adjust distance from h1 to h2 */
-  width: 1px; /* Line width */
-  height: 50%;
-  background-color: #fff; /* Line color */
-  transform: translateY(-50%);
-}
-
-main {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #fff; /* Main content background color */
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Box shadow */
-}
-
-.user-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center; /* Center align the user cards */
-}
-
-.user-card {
-  background-color: #f9f9f9; /* User card background color */
-  padding: 10px;
-  border-radius: 5px;
-  text-align: center; /* Center align the text */
-}
-
-.divider {
-  border-bottom: 2px solid #ccc; /* Divider line color */
-  margin: 20px 0;
-}
-
-.user-details {
-  /* User details styling */
-  text-align: center; /* Center align the text */
-}
-
-.reload-button {
-  background-color: #4CAF50; /* Green */
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  text-align: center; /* Center align the text */
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin-top: 10px;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
-}
-
-.reload-button:hover {
-  background-color: #45a049; /* Darker green */
-}
+export default useCachedUserDetail;
