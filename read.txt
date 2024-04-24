@@ -1,12 +1,88 @@
-
-  const refreshUserDetail = async () => {
-    if (userId) {
-      const fetchedUser = await fetchUserDetail(userId);
-      setUserDetail(fetchedUser);
-    }
-  };
-
-  return { userDetail, refreshUserDetail };
+https://stackoverflow.com/questions/56004504/how-to-implement-role-based-restrictions-permissions-in-react-redux-app
+type GraphProps = {
+  permission: number;
 };
 
-export default useCachedUserDetail;
+const GraphComponent: React.FC<GraphProps> = ({ permission }) => {
+  if (permission < 3) {
+    return <div>This graph is not available for your permission level.</div>;
+  }
+
+  return (
+    <div>
+      {/* Render your graph here */}
+    </div>
+  );
+};
+
+----
+
+typescript
+import React, { useState } from 'react';
+
+const PERMISSION_STATUS = {
+  HIDE_GRAPH_1: 1,
+  HIDE_GRAPH_2: 2,
+  HIDE_GRAPH_3: 3
+};
+
+const GraphComponent: React.FC = () => {
+  const [permissionStatus, setPermissionStatus] = useState<number>(PERMISSION_STATUS.HIDE_GRAPH_1);
+
+  // Update permission status based on certain conditions
+  const updatePermissionStatus = (status: number) => {
+    setPermissionStatus(status);
+  };
+
+  return (
+    <div>
+      {permissionStatus !== PERMISSION_STATUS.HIDE_GRAPH_1 && <Graph />}
+    </div>
+  );
+};
+
+const Graph: React.FC = () => {
+  return <div>Graph Component</div>;
+};
+
+export default GraphComponent;
+----
+typescript
+import React, { useState } from 'react';
+
+const PERMISSION_STATUS = {
+  HIDE_GRAPH_1: 1,
+  HIDE_GRAPH_2: 2,
+  HIDE_GRAPH_3: 3
+};
+
+const GraphComponent: React.FC = () => {
+  const [permissionStatus, setPermissionStatus] = useState<number>(PERMISSION_STATUS.HIDE_GRAPH_1);
+
+  // Update permission status based on certain conditions
+  const updatePermissionStatus = (status: number) => {
+    setPermissionStatus(status);
+  };
+
+  return (
+    <div>
+      {permissionStatus !== PERMISSION_STATUS.HIDE_GRAPH_1 && <Graph1 />}
+      {permissionStatus !== PERMISSION_STATUS.HIDE_GRAPH_2 && <Graph2 />}
+      {permissionStatus !== PERMISSION_STATUS.HIDE_GRAPH_3 && <Graph3 />}
+    </div>
+  );
+};
+
+const Graph1: React.FC = () => {
+  return <div>Graph 1</div>;
+};
+
+const Graph2: React.FC = () => {
+  return <div>Graph 2</div>;
+};
+
+const Graph3: React.FC = () => {
+  return <div>Graph 3</div>;
+};
+
+export default GraphComponent;
