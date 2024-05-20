@@ -5,3 +5,63 @@ export const postalCodes: { [key: string]: { prefecture: string, city: string, s
   '2000001': { prefecture: 'Osaka', city: 'Osaka', street: '2-2-1' },
   //...
 };
+
+// Define a type for the address data
+type AddressData = {
+  postalCode: string;
+  prefecture: string;
+  city: string;
+  street: string;
+};
+
+// Create an array of dummy data
+const DUMMY_DATA: AddressData[] = [
+  {
+    postalCode: '100-0001',
+    prefecture: 'Tokyo',
+    city: 'Chiyoda',
+    street: 'Chiyoda 1-1',
+  },
+  // Add more entries as needed
+];
+
+import React, { useState } from 'react';
+
+const PostalCodeLookup = () => {
+  const [postalCode, setPostalCode] = useState('');
+  const [address, setAddress] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSearch = () => {
+    // Reset the address and error messages
+    setAddress('');
+    setError('');
+
+    // Find the address data using the postal code
+    const addressData = DUMMY_DATA.find(data => data.postalCode === postalCode);
+
+    if (addressData) {
+      // If found, set the address string with single byte spaces
+      setAddress(`${addressData.prefecture} ${addressData.city} ${addressData.street}`);
+    } else {
+      // If not found, set the error message
+      setError('The entered zip code is wrong.');
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={postalCode}
+        onChange={(e) => setPostalCode(e.target.value)}
+        placeholder="Enter postal code"
+      />
+      <button onClick={handleSearch}>Search</button>
+      {address && <div>{address}</div>}
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+    </div>
+  );
+};
+
+export default PostalCodeLookup;
