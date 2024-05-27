@@ -1,67 +1,82 @@
-// postal-codes.ts (dummy data file)
-export const postalCodes: { [key: string]: { prefecture: string, city: string, street: string } } = {
-  '1000001': { prefecture: 'Tokyo', city: 'Chiyoda', street: '1-1-1' },
-  '1000002': { prefecture: 'Tokyo', city: 'Chiyoda', street: '1-1-2' },
-  '2000001': { prefecture: 'Osaka', city: 'Osaka', street: '2-2-1' },
-  //...
-};
+import React, { useState } from 'react';
 
-// Define a type for the address data
-type AddressData = {
-  postalCode: string;
+interface Address {
   prefecture: string;
   city: string;
   street: string;
+}
+
+const data = {
+  "1000001": {
+    prefecture: "Tokyo",
+    city: "Chiyoda",
+    street: "1-1-1"
+  },
+  "1000002": {
+    prefecture: "Tokyo",
+    city: "Chuo",
+    street: "2-2-2"
+  },
+  "1500001": {
+    prefecture: "Osaka",
+    city: "Kita",
+    street: "3-3-3"
+  },
+  "2000001": {
+    prefecture: "Aichi",
+    city: "Nagoya",
+    street: "4-4-4"
+  },
+  "3000001": {
+    prefecture: "Fukuoka",
+    city: "Chuo",
+    street: "5-5-5"
+  }
 };
 
-// Create an array of dummy data
-const DUMMY_DATA: AddressData[] = [
-  {
-    postalCode: '100-0001',
-    prefecture: 'Tokyo',
-    city: 'Chiyoda',
-    street: 'Chiyoda 1-1',
-  },
-  // Add more entries as needed
-];
-
-import React, { useState } from 'react';
-
-const PostalCodeLookup = () => {
-  const [postalCode, setPostalCode] = useState('');
-  const [address, setAddress] = useState('');
+const App = () => {
+  const [zipCode, setZipCode] = useState('');
+  const [address, setAddress] = useState<Address | null>(null);
   const [error, setError] = useState('');
 
-  const handleSearch = () => {
-    // Reset the address and error messages
-    setAddress('');
-    setError('');
+  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setZipCode(e.target.value);
+  };
 
-    // Find the address data using the postal code
-    const addressData = DUMMY_DATA.find(data => data.postalCode === postalCode);
-
-    if (addressData) {
-      // If found, set the address string with single byte spaces
-      setAddress(`${addressData.prefecture} ${addressData.city} ${addressData.street}`);
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const address = data[zipCode];
+    if (address) {
+      setAddress(address);
+      console.log('Acquisition results:', address);
     } else {
-      // If not found, set the error message
-      setError('The entered zip code is wrong.');
+      setError('Entered zip code is wrong');
     }
   };
 
   return (
     <div>
-      <input
-        type="text"
-        value={postalCode}
-        onChange={(e) => setPostalCode(e.target.value)}
-        placeholder="Enter postal code"
-      />
-      <button onClick={handleSearch}>Search</button>
-      {address && <div>{address}</div>}
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+      <form onSubmit={handleSubmit}>
+        <label>
+          Yuubinbango (Postal Code):
+          <input type="text" value={zipCode} onChange={handleZipCodeChange} />
+        </label>
+        <button type="submit">Search</button>
+      </form>
+      {address && (
+        <div>
+          <p>
+            {address.prefecture} {address.city} {address.street}
+          </p>
+        </div>
+      )}
+      {error && (
+        <div style={{ color: 'red' }}>
+          <p>{error}</p>
+        </div>
+      )}
     </div>
   );
 };
 
-export default PostalCodeLookup;
+export default App;
