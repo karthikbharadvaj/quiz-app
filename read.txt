@@ -1,75 +1,56 @@
-    <div>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Yuubinbango (Postal Code):
-          <input type="text" value={zipCode} onChange={handleZipCodeChange} />
-        </label>
-        <button type="submit">Search</button>
-      </form>
-      {address && (
-        <div>
-          <p>{address}</p>
-        </div>
-      )}
-      {error && (
-        <div style={{ color: 'red' }}>
-          <p>{error}</p>
-        </div>
-      )}
-    </div>
+type ZipCode = '1000001' | '1000002' | '1500001' | '2000001' | '3000001';
 
-setAddress(`${addressData.prefecture} ${addressData.city} ${addressData.street}`);
-      console.log('Acquisition results:', address);
-import React, { useState } from 'react';
+export const getAddressData = (zipCode: ZipCode) => {
+  const yuubinbangoData = {
+    "1000001": {
+      prefecture: "Tokyo",
+      city: "Chiyoda",
+      street: "1-1-1"
+    },
+    "1000002": {
+      prefecture: "Tokyo",
+      city: "Chuo",
+      street: "2-2-2"
+    },
+    "1500001": {
+      prefecture: "Osaka",
+      city: "Kita",
+      street: "3-3-3"
+    },
+    "2000001": {
+      prefecture: "Aichi",
+      city: "Nagoya",
+      street: "4-4-4"
+    },
+    "3000001": {
+      prefecture: "Fukuoka",
+      city: "Chuo",
+      street: "5-5-5"
+    }
+  };
 
-interface Address {
-  prefecture: string;
-  city: string;
-  street: string;
-}
-
-const data = {
-  "1000001": {
-    prefecture: "Tokyo",
-    city: "Chiyoda",
-    street: "1-1-1"
-  },
-  "1000002": {
-    prefecture: "Tokyo",
-    city: "Chuo",
-    street: "2-2-2"
-  },
-  "1500001": {
-    prefecture: "Osaka",
-    city: "Kita",
-    street: "3-3-3"
-  },
-  "2000001": {
-    prefecture: "Aichi",
-    city: "Nagoya",
-    street: "4-4-4"
-  },
-  "3000001": {
-    prefecture: "Fukuoka",
-    city: "Chuo",
-    street: "5-5-5"
-  }
+  return yuubinbangoData[zipCode];
 };
 
+import React, { useState } from 'react';
+import { getAddressData } from './data';
+
+type ZipCode = '1000001' | '1000002' | '1500001' | '2000001' | '3000001';
+
 const App = () => {
-  const [zipCode, setZipCode] = useState('');
-  const [address, setAddress] = useState<Address | null>(null);
+  const [zipCode, setZipCode] = useState<ZipCode | ''>('');
+  const [address, setAddress] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setZipCode(e.target.value);
+    setZipCode(e.target.value as ZipCode);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const address = data[zipCode];
-    if (address) {
-      setAddress(address);
+    const addressData = getAddressData(zipCode);
+    if (addressData) {
+      setAddress(`${addressData.prefecture} ${addressData.city} ${addressData.street}`);
       console.log('Acquisition results:', address);
     } else {
       setError('Entered zip code is wrong');
@@ -87,9 +68,7 @@ const App = () => {
       </form>
       {address && (
         <div>
-          <p>
-            {address.prefecture} {address.city} {address.street}
-          </p>
+          <p>{address}</p>
         </div>
       )}
       {error && (
