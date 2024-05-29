@@ -1,3 +1,112 @@
+export const postalCodes = {
+  "1000001": {
+    prefecture: "Tokyo",
+    city: "Chiyoda",
+    street: "1-1-1"
+  },
+  "1000002": {
+    prefecture: "Tokyo",
+    city: "Chuo",
+    street: "2-2-2"
+  },
+  "1500001": {
+    prefecture: "Osaka",
+    city: "Kita",
+    street: "3-3-3"
+  },
+  "2000001": {
+    prefecture: "Aichi",
+    city: "Nagoya",
+    street: "4-4-4"
+  },
+  "3000001": {
+    prefecture: "Fukuoka",
+    city: "Chuo",
+    street: "5-5-5"
+  }
+};
+
+import React, { useState } from 'react';
+import { postalCodes } from './postalCodes';
+
+type PostalCodeData = {
+  prefecture: string;
+  city: string;
+  street: string;
+};
+
+type PostalCodeLookupProps = {
+  onLookup: (data: PostalCodeData | null) => void;
+};
+
+const PostalCodeLookup: React.FC<PostalCodeLookupProps> = ({ onLookup }) => {
+  const [zipCode, setZipCode] = useState('');
+
+  const handleZipCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setZipCode(event.target.value);
+  };
+
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = postalCodes[zipCode];
+    onLookup(data || null);
+  };
+
+  return (
+    <form onSubmit={handleFormSubmit}>
+      <label>
+        Yuubinbango (Postal Code):
+        <input type="text" value={zipCode} onChange={handleZipCodeChange} />
+      </label>
+      <button type="submit">Search</button>
+    </form>
+  );
+};
+
+export default PostalCodeLookup;
+import React, { useState } from 'react';
+import PostalCodeLookup from './PostalCodeLookup';
+
+type FormState = {
+  zipCode: string | null;
+  address: string | null;
+  error: string | null;
+};
+
+const initialFormState: FormState = {
+  zipCode: null,
+  address: null,
+  error: null,
+};
+
+const App: React.FC = () => {
+  const [formState, setFormState] = useState(initialFormState);
+
+  const handlePostalCodeLookup = (data: PostalCodeData | null) => {
+    if (data) {
+      setFormState({
+        ...formState,
+        zipCode: data.zipCode,
+        address: `${data.prefecture} ${data.city} ${data.street}`,
+        error: null,
+      });
+    } else {
+      setFormState({
+        ...formState,
+        zipCode: null,
+        address: null,
+        error: 'Entered zip code is wrong',
+      });
+    }
+  };
+
+  return (
+    <div>
+      {/* Existing form code */}
+      <PostalCodeLookup onLookup={handlePostalCodeLookup} />
+      {formState.error && (
+        <div style={{
+--------
 type ZipCode = '1000001' | '1000002' | '1500001' | '2000001' | '3000001';
 
 export const getAddressData = (zipCode: ZipCode) => {
