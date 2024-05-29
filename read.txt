@@ -1,3 +1,26 @@
+ <form onSubmit={handleSubmit}>
+        <label htmlFor="zipCode">Zip Code:</label>
+        <input
+          type="text"
+          id="zipCode"
+          value={zipCode}
+          onChange={(e) => setZipCode(e.target.value)}
+        />
+        <button type="submit">Search</button>
+      </form>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {result && (
+        <div>
+          <p>
+            {result.prefecture} {result.city} {result.street}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default App;
 export const postalCodes = {
   "1000001": {
     prefecture: "Tokyo",
