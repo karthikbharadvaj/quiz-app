@@ -1,3 +1,5 @@
+setAddress(`${addressData.prefecture} ${addressData.city} ${addressData.street}`);
+      console.log('Acquisition results:', address);
 import React, { useState } from 'react';
 
 interface Address {
