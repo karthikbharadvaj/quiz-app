@@ -1,3 +1,23 @@
+    <div>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Yuubinbango (Postal Code):
+          <input type="text" value={zipCode} onChange={handleZipCodeChange} />
+        </label>
+        <button type="submit">Search</button>
+      </form>
+      {address && (
+        <div>
+          <p>{address}</p>
+        </div>
+      )}
+      {error && (
+        <div style={{ color: 'red' }}>
+          <p>{error}</p>
+        </div>
+      )}
+    </div>
+
 setAddress(`${addressData.prefecture} ${addressData.city} ${addressData.street}`);
       console.log('Acquisition results:', address);
 import React, { useState } from 'react';
