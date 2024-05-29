@@ -1,215 +1,54 @@
- <form onSubmit={handleSubmit}>
-        <label htmlFor="zipCode">Zip Code:</label>
+    <div className="App">
+      <h1 style={{ textAlign: "center", fontSize: "24px", fontWeight: "bold" }}>
+        Yuubinbango Search
+      </h1>
+      <form onSubmit={handleSubmit} style={{ maxWidth: "300px", margin: "40px auto" }}>
+        <label
+          htmlFor="zipCode"
+          style={{ display: "block", marginBottom: "10px" }}
+        >
+          Zip Code:
+        </label>
         <input
           type="text"
           id="zipCode"
           value={zipCode}
           onChange={(e) => setZipCode(e.target.value)}
+          style={{ width: "100%", padding: "10px", fontSize: "16px" }}
         />
-        <button type="submit">Search</button>
-      </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {result && (
-        <div>
-          <p>
-            {result.prefecture} {result.city} {result.street}
+        <button
+          type="submit"
+          style={{
+            backgroundColor: "#4CAF50",
+            color: "#fff",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Search
+        </button>
+        {error && (
+          <p style={{ color: "red", fontSize: "14px", marginTop: "10px" }}>
+            {error}
           </p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default App;
-export const postalCodes = {
-  "1000001": {
-    prefecture: "Tokyo",
-    city: "Chiyoda",
-    street: "1-1-1"
-  },
-  "1000002": {
-    prefecture: "Tokyo",
-    city: "Chuo",
-    street: "2-2-2"
-  },
-  "1500001": {
-    prefecture: "Osaka",
-    city: "Kita",
-    street: "3-3-3"
-  },
-  "2000001": {
-    prefecture: "Aichi",
-    city: "Nagoya",
-    street: "4-4-4"
-  },
-  "3000001": {
-    prefecture: "Fukuoka",
-    city: "Chuo",
-    street: "5-5-5"
-  }
-};
-
-import React, { useState } from 'react';
-import { postalCodes } from './postalCodes';
-
-type PostalCodeData = {
-  prefecture: string;
-  city: string;
-  street: string;
-};
-
-type PostalCodeLookupProps = {
-  onLookup: (data: PostalCodeData | null) => void;
-};
-
-const PostalCodeLookup: React.FC<PostalCodeLookupProps> = ({ onLookup }) => {
-  const [zipCode, setZipCode] = useState('');
-
-  const handleZipCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setZipCode(event.target.value);
-  };
-
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = postalCodes[zipCode];
-    onLookup(data || null);
-  };
-
-  return (
-    <form onSubmit={handleFormSubmit}>
-      <label>
-        Yuubinbango (Postal Code):
-        <input type="text" value={zipCode} onChange={handleZipCodeChange} />
-      </label>
-      <button type="submit">Search</button>
-    </form>
-  );
-};
-
-export default PostalCodeLookup;
-import React, { useState } from 'react';
-import PostalCodeLookup from './PostalCodeLookup';
-
-type FormState = {
-  zipCode: string | null;
-  address: string | null;
-  error: string | null;
-};
-
-const initialFormState: FormState = {
-  zipCode: null,
-  address: null,
-  error: null,
-};
-
-const App: React.FC = () => {
-  const [formState, setFormState] = useState(initialFormState);
-
-  const handlePostalCodeLookup = (data: PostalCodeData | null) => {
-    if (data) {
-      setFormState({
-        ...formState,
-        zipCode: data.zipCode,
-        address: `${data.prefecture} ${data.city} ${data.street}`,
-        error: null,
-      });
-    } else {
-      setFormState({
-        ...formState,
-        zipCode: null,
-        address: null,
-        error: 'Entered zip code is wrong',
-      });
-    }
-  };
-
-  return (
-    <div>
-      {/* Existing form code */}
-      <PostalCodeLookup onLookup={handlePostalCodeLookup} />
-      {formState.error && (
-        <div style={{
---------
-type ZipCode = '1000001' | '1000002' | '1500001' | '2000001' | '3000001';
-
-export const getAddressData = (zipCode: ZipCode) => {
-  const yuubinbangoData = {
-    "1000001": {
-      prefecture: "Tokyo",
-      city: "Chiyoda",
-      street: "1-1-1"
-    },
-    "1000002": {
-      prefecture: "Tokyo",
-      city: "Chuo",
-      street: "2-2-2"
-    },
-    "1500001": {
-      prefecture: "Osaka",
-      city: "Kita",
-      street: "3-3-3"
-    },
-    "2000001": {
-      prefecture: "Aichi",
-      city: "Nagoya",
-      street: "4-4-4"
-    },
-    "3000001": {
-      prefecture: "Fukuoka",
-      city: "Chuo",
-      street: "5-5-5"
-    }
-  };
-
-  return yuubinbangoData[zipCode];
-};
-
-import React, { useState } from 'react';
-import { getAddressData } from './data';
-
-type ZipCode = '1000001' | '1000002' | '1500001' | '2000001' | '3000001';
-
-const App = () => {
-  const [zipCode, setZipCode] = useState<ZipCode | ''>('');
-  const [address, setAddress] = useState<string | null>(null);
-  const [error, setError] = useState('');
-
-  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setZipCode(e.target.value as ZipCode);
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const addressData = getAddressData(zipCode);
-    if (addressData) {
-      setAddress(`${addressData.prefecture} ${addressData.city} ${addressData.street}`);
-      console.log('Acquisition results:', address);
-    } else {
-      setError('Entered zip code is wrong');
-    }
-  };
-
-  return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Yuubinbango (Postal Code):
-          <input type="text" value={zipCode} onChange={handleZipCodeChange} />
-        </label>
-        <button type="submit">Search</button>
+        )}
+        {result && (
+          <div
+            style={{
+              marginTop: "20px",
+              padding: "20px",
+              border: "1px solid #ddd",
+              borderRadius: "10px",
+            }}
+          >
+            <p>
+              {result.prefecture} {result.city} {result.street}
+            </p>
+          </div>
+        )}
       </form>
-      {address && (
-        <div>
-          <p>{address}</p>
-        </div>
-      )}
-      {error && (
-        <div style={{ color: 'red' }}>
-          <p>{error}</p>
-        </div>
-      )}
     </div>
   );
 };
-
-export default App;
