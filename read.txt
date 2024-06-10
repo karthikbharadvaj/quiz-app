@@ -1,54 +1,38 @@
+ const [postalCode, setPostalCode] = useState('');
+  const [trigger, { data, error }] = useLazyGetPostalDetailsQuery();
+
+  const handleSearch = () => {
+    if (postalCode.length !== 7) {
+      alert('Please enter a valid 7-digit postal code.');
+    } else {
+      trigger(postalCode);
+    }
+  };
+
+  return (
     <div className="App">
-      <h1 style={{ textAlign: "center", fontSize: "24px", fontWeight: "bold" }}>
-        Yuubinbango Search
-      </h1>
-      <form onSubmit={handleSubmit} style={{ maxWidth: "300px", margin: "40px auto" }}>
-        <label
-          htmlFor="zipCode"
-          style={{ display: "block", marginBottom: "10px" }}
-        >
-          Zip Code:
-        </label>
+      <h1>Postal Code Search</h1>
+      <div>
         <input
           type="text"
-          id="zipCode"
-          value={zipCode}
-          onChange={(e) => setZipCode(e.target.value)}
-          style={{ width: "100%", padding: "10px", fontSize: "16px" }}
+          value={postalCode}
+          onChange={(e) => setPostalCode(e.target.value)}
+          placeholder="Enter postal code"
         />
-        <button
-          type="submit"
-          style={{
-            backgroundColor: "#4CAF50",
-            color: "#fff",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Search
-        </button>
-        {error && (
-          <p style={{ color: "red", fontSize: "14px", marginTop: "10px" }}>
-            {error}
-          </p>
-        )}
-        {result && (
-          <div
-            style={{
-              marginTop: "20px",
-              padding: "20px",
-              border: "1px solid #ddd",
-              borderRadius: "10px",
-            }}
-          >
-            <p>
-              {result.prefecture} {result.city} {result.street}
-            </p>
+        <button onClick={handleSearch}>Search</button>
+      </div>
+      {error ? (
+        <p style={{ color: 'red' }}>The entered zip code is wrong.</p>
+      ) : (
+        data && (
+          <div>
+            <h2>Postal Code Details:</h2>
+            <p>{`${data.prefecture} ${data.city} ${data.street}`}</p>
           </div>
-        )}
-      </form>
+        )
+      )}
     </div>
   );
 };
+
+export default App;
