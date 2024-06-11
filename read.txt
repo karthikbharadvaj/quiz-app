@@ -1,26 +1,51 @@
- const [postalCode, setPostalCode] = useState('');
+import React, { useState } from 'react';
+import { Control } from 'react-hook-form';
+import { TextField, Button } from '@mui/material';
+import { useLazyGetPostalDetailsQuery } from './store/postalApi'; // Ensure correct path to postalApi
+
+interface ApplyformCompanyProps {
+  control: Control<any>; // Adjust the type as needed
+  handleOnFindPostCode: () => void;
+  corporateAddress: string; // Adjust the type according to your needs
+  // Add any other props needed
+}
+
+const ApplyformCompany: React.FC<ApplyformCompanyProps> = ({
+  control,
+  handleOnFindPostCode,
+  corporateAddress,
+  ...otherProps
+}) => {
+  const [postalCode, setPostalCode] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [trigger, { data, error }] = useLazyGetPostalDetailsQuery();
 
   const handleSearch = () => {
     if (postalCode.length !== 7) {
-      alert('Please enter a valid 7-digit postal code.');
+      setErrorMessage('Please enter a valid 7-digit postal code.');
     } else {
+      setErrorMessage('');
       trigger(postalCode);
     }
   };
 
   return (
-    <div className="App">
-      <h1>Postal Code Search</h1>
+    <div>
+      {/* existing form elements */}
+
+      {/* Postal Code Search */}
       <div>
-        <input
-          type="text"
+        <TextField
+          label="Enter postal code"
           value={postalCode}
           onChange={(e) => setPostalCode(e.target.value)}
           placeholder="Enter postal code"
         />
-        <button onClick={handleSearch}>Search</button>
+        <Button onClick={handleSearch} variant="contained" color="primary">
+          Search
+        </Button>
       </div>
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       {error ? (
         <p style={{ color: 'red' }}>The entered zip code is wrong.</p>
       ) : (
@@ -31,8 +56,10 @@
           </div>
         )
       )}
+
+      {/* existing form elements */}
     </div>
   );
 };
 
-export default App;
+export default ApplyformCompany;
