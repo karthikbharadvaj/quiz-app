@@ -1,65 +1,131 @@
-import React, { useState } from 'react';
-import { Control } from 'react-hook-form';
-import { TextField, Button } from '@mui/material';
-import { useLazyGetPostalDetailsQuery } from './store/postalApi'; // Ensure correct path to postalApi
+// src/components/RegistrationForm.tsx
 
-interface ApplyformCompanyProps {
-  control: Control<any>; // Adjust the type as needed
-  handleOnFindPostCode: () => void;
-  corporateAddress: string; // Adjust the type according to your needs
-  // Add any other props needed
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+
+interface FormData {
+  companyName: string;
+  address: string;
+  option: string;
 }
 
-const ApplyformCompany: React.FC<ApplyformCompanyProps> = ({
-  control,
-  handleOnFindPostCode,
-  corporateAddress,
-  ...otherProps
-}) => {
-  const [postalCode, setPostalCode] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [trigger, { data, error }] = useLazyGetPostalDetailsQuery();
+const RegistrationForm: React.FC = () => {
+  const { register, handleSubmit, setValue, trigger, formState: { errors } } = useForm<FormData>();
+  const [formData, setFormData] = React.useState<FormData>({
+    companyName: '',
+    address: '',
+    option: '',
+  });
 
-  const handleSearch = () => {
-    if (postalCode.length !== 7) {
-      setErrorMessage('Please enter a valid 7-digit postal code.');
-    } else {
-      setErrorMessage('');
-      trigger(postalCode);
+  useEffect(() => {
+    // Load saved form data from local storage
+    const savedData = localStorage.getItem('formData');
+    if (savedData) {
+      const parsedData: FormData = JSON.parse(savedData);
+      setFormData(parsedData);
+      // Set form values using setValue
+      Object.keys(parsedData).forEach(key => {
+        setValue(key as keyof FormData, (parsedData as any)[key]);
+      });
+    }
+  }, [setValue]);
+
+  const handleSave = async (data: FormData) => {
+    try {
+      const response = await fetch('http://localhost:5000/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Processing failed');
+      }
+
+      const responseData = await response.json();
+      console.log('Data saved:', responseData);
+      localStorage.setItem('formData', JSON.stringify(data));
+    } catch (error) {
+      alert('Processing failed');
+      console.error(error);
+    }
+  };
+
+  const handleRetrieve = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/retrieve', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Processing failed');
+      }
+
+      const data: FormData = await response.json();
+      setFormData(data);
+      // Set form values using setValue
+      Object.keys(data).forEach(key => {
+        setValue(key as keyof FormData, (data as any)[key]);
+      });
+      console.log('Data retrieved:', data);
+    } catch (error) {
+      alert('Processing failed');
+      console.error(error);
     }
   };
 
   return (
     <div>
-      {/* existing form elements */}
-
-      {/* Postal Code Search */}
-      <div>
-        <TextField
-          label="Enter postal code"
-          value={postalCode}
-          onChange={(e) => setPostalCode(e.target.value)}
-          placeholder="Enter postal code"
-        />
-        <Button onClick={handleSearch} variant="contained" color="primary">
-          Search
-        </Button>
-      </div>
-      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-      {error ? (
-        <p style={{ color: 'red' }}>The entered zip code is wrong.</p>
-      ) : (
-        data && (
-          <div>
-            <h2>Postal Code Details:</h2>
-            <p>{`${data.prefecture} ${data.city} ${data.street}`}</p>
-          </div>
-        )
-      )}
-
-      {/* existing form elements */}
+      <h1>Registration Form</h1>
+      <form onSubmit={handleSubmit(handleSave)}>
+        <div>
+          <label>
+            Company Name:
+            <input
+              type="text"
+              {...register('companyName', { required: 'Company Name is required' })}
+            />
+            {errors.companyName && <span>{errors.companyName.message}</span>}
+          </label>
+        </div>
+        <div>
+          <label>
+            Address:
+            <input
+              type="text"
+              {...register('address', { required: 'Address is required' })}
+            />
+            {errors.address && <span>{errors.address.message}</span>}
+          </label>
+        </div>
+        <div>
+          <label>
+            Option:
+            <input
+              type="radio"
+              value="Option 1"
+              {...register('option', { required: 'Option is required' })}
+            />
+            Option 1
+            <input
+              type="radio"
+              value="Option 2"
+              {...register('option', { required: 'Option is required' })}
+            />
+            Option 2
+            {errors.option && <span>{errors.option.message}</span>}
+          </label>
+        </div>
+        <button type="submit">Save</button>
+        <button type="button" onClick={handleRetrieve}>Retrieve</button>
+      </form>
     </div>
   );
 };
 
-export default ApplyformCompany;
+export default RegistrationForm;
