@@ -1,131 +1,24 @@
-// src/components/RegistrationForm.tsx
-
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-
-interface FormData {
-  companyName: string;
-  address: string;
-  option: string;
-}
-
-const RegistrationForm: React.FC = () => {
-  const { register, handleSubmit, setValue, trigger, formState: { errors } } = useForm<FormData>();
-  const [formData, setFormData] = React.useState<FormData>({
-    companyName: '',
-    address: '',
-    option: '',
-  });
-
-  useEffect(() => {
-    // Load saved form data from local storage
-    const savedData = localStorage.getItem('formData');
-    if (savedData) {
-      const parsedData: FormData = JSON.parse(savedData);
-      setFormData(parsedData);
-      // Set form values using setValue
-      Object.keys(parsedData).forEach(key => {
-        setValue(key as keyof FormData, (parsedData as any)[key]);
-      });
-    }
-  }, [setValue]);
-
-  const handleSave = async (data: FormData) => {
-    try {
-      const response = await fetch('http://localhost:5000/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error('Processing failed');
-      }
-
-      const responseData = await response.json();
-      console.log('Data saved:', responseData);
-      localStorage.setItem('formData', JSON.stringify(data));
-    } catch (error) {
-      alert('Processing failed');
-      console.error(error);
-    }
-  };
-
-  const handleRetrieve = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/retrieve', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Processing failed');
-      }
-
-      const data: FormData = await response.json();
-      setFormData(data);
-      // Set form values using setValue
-      Object.keys(data).forEach(key => {
-        setValue(key as keyof FormData, (data as any)[key]);
-      });
-      console.log('Data retrieved:', data);
-    } catch (error) {
-      alert('Processing failed');
-      console.error(error);
-    }
-  };
-
-  return (
-    <div>
-      <h1>Registration Form</h1>
-      <form onSubmit={handleSubmit(handleSave)}>
-        <div>
-          <label>
-            Company Name:
-            <input
-              type="text"
-              {...register('companyName', { required: 'Company Name is required' })}
-            />
-            {errors.companyName && <span>{errors.companyName.message}</span>}
-          </label>
-        </div>
-        <div>
-          <label>
-            Address:
-            <input
-              type="text"
-              {...register('address', { required: 'Address is required' })}
-            />
-            {errors.address && <span>{errors.address.message}</span>}
-          </label>
-        </div>
-        <div>
-          <label>
-            Option:
-            <input
-              type="radio"
-              value="Option 1"
-              {...register('option', { required: 'Option is required' })}
-            />
-            Option 1
-            <input
-              type="radio"
-              value="Option 2"
-              {...register('option', { required: 'Option is required' })}
-            />
-            Option 2
-            {errors.option && <span>{errors.option.message}</span>}
-          </label>
-        </div>
-        <button type="submit">Save</button>
-        <button type="button" onClick={handleRetrieve}>Retrieve</button>
-      </form>
-    </div>
-  );
+const obj1 = {
+  a: 1,
+  b: {
+    c: 2,
+    d: {
+      e: 3,
+      f: 4,
+    },
+  },
+  g: 5,
 };
 
-export default RegistrationForm;
+const obj2 = {
+  b: {
+    c: 20,
+    d: {
+      e: 30,
+    },
+  },
+  h: 6,
+};
+
+const result = recursiveMerge(obj1, obj2);
+console.log(result);
