@@ -1,3 +1,54 @@
+type AnyObject = { [key: string]: any };
+
+function recursiveMerge(obj1: AnyObject, obj2: AnyObject): AnyObject {
+  return Object.keys({ ...obj1, ...obj2 }).reduce((acc: AnyObject, key: string) => {
+    if (typeof obj1[key] === 'object' && obj1[key] !== null && typeof obj2[key] === 'object' && obj2[key] !== null) {
+      acc[key] = recursiveMerge(obj1[key], obj2[key]);
+    } else {
+      acc[key] = obj2[key] !== undefined ? obj2[key] : obj1[key];
+    }
+    return acc;
+  }, {});
+}
+
+const obj1 = {
+  a: 1,
+  b: {
+    c: 2,
+    d: {
+      e: 3,
+      f: 4,
+    },
+  },
+  g: 5,
+};
+
+const obj2 = {
+  b: {
+    c: 20,
+    d: {
+      e: 30,
+    },
+  },
+  h: 6,
+};
+
+const result = recursiveMerge(obj1, obj2);
+console.log(result);
+// Output:
+// {
+//   a: 1,
+//   b: {
+//     c: 20,
+//     d: {
+//       e: 30,
+//       f: 4,
+//     },
+//   },
+//   g: 5,
+//   h: 6,
+// }
+___
 function recursiveMerge(obj1, obj2) {
   return Object.keys({ ...obj1, ...obj2 }).reduce((acc, key) => {
     if (typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
