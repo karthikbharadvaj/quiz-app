@@ -1,7 +1,19 @@
-⚡️ Download BLACKBOXAI on VSCode
-Toggle Sidebar
-
-Create Agent
+function recursiveMerge(data, defaultValue) {
+  if (!defaultValue) defaultValue = {}; // ensure defaultValue is an object
+  const result = {...defaultValue };
+  for (const key in data) {
+    if (data.hasOwnProperty(key)) {
+      const value = data[key];
+      if (typeof value === 'object' && value!== null) {
+        result[key] = recursiveMerge(value, defaultValue[key] || {});
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result;
+}
+—------
 
 Vscode Extension
 
