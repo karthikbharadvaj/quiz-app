@@ -1,18 +1,24 @@
-function recursiveMerge(data, defaultValue) {
-  if (!defaultValue) defaultValue = {}; // ensure defaultValue is an object
-  const result = {...defaultValue };
-  for (const key in data) {
-    if (data.hasOwnProperty(key)) {
-      const value = data[key];
-      if (typeof value === 'object' && value!== null) {
-        result[key] = recursiveMerge(value, defaultValue[key] || {});
+function deepMerge(target: any, source: any): any {
+  const output = Object.assign({}, target);
+  if (isObject(target) && isObject(source)) {
+    Object.keys(source).forEach(key => {
+      if (isObject(source[key])) {
+        if (!(key in target))
+          Object.assign(output, { [key]: source[key] });
+        else
+          output[key] = deepMerge(target[key], source[key]);
       } else {
-        result[key] = value;
+        Object.assign(output, { [key]: source[key] });
       }
-    }
+    });
   }
-  return result;
+  return output;
 }
+
+function isObject(item: any): boolean {
+  return (item && typeof item === 'object' && !Array.isArray(item));
+}
+
 —------
 
 Vscode Extension
