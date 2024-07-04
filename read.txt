@@ -1,3 +1,33 @@
+function robustMerge(target: any, source: any): any {
+  const isObject = (item: any) => item && typeof item === 'object' && !Array.isArray(item);
+
+  if (!isObject(target) && !isObject(source)) {
+    return source !== undefined ? source : target;
+  }
+
+  let output = { ...target };
+
+  if (isObject(source)) {
+    Object.keys(source).forEach(key => {
+      if (isObject(source[key])) {
+        if (!(key in target)) {
+          Object.assign(output, { [key]: source[key] });
+        } else {
+          output[key] = robustMerge(target[key], source[key]);
+        }
+      } else if (Array.isArray(source[key])) {
+        output[key] = Array.isArray(target[key]) 
+          ? [...new Set([...target[key], ...source[key]])] 
+          : source[key];
+      } else {
+        Object.assign(output, { [key]: source[key] });
+      }
+    });
+  }
+
+  return output;
+}
+--
 type AnyObject = { [key: string]: any };
 
 function simpleMerge(target: AnyObject, source: AnyObject): AnyObject {
