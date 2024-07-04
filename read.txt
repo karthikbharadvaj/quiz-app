@@ -1,26 +1,88 @@
-type ObjectWithStringKeys = { [key: string]: any };
+type AnyObject = { [key: string]: any };
 
-function simpleMerge(target: ObjectWithStringKeys, source: ObjectWithStringKeys): ObjectWithStringKeys {
-  return Object.keys({ ...target, ...source }).reduce((merged: ObjectWithStringKeys, key: string) => {
+function simpleMerge(target: AnyObject, source: AnyObject): AnyObject {
+  return Object.keys({ ...target, ...source }).reduce((merged: AnyObject, key: string) => {
     merged[key] = 
       target[key] && source[key] && typeof target[key] === 'object' && typeof source[key] === 'object'
         ? simpleMerge(target[key], source[key])
-        : (key in target ? target[key] : source[key]);
+        : (target[key] !== undefined ? target[key] : source[key]);
     return merged;
   }, {});
 }
 
 // Example usage
-const exampleData: ObjectWithStringKeys = { 
+const exampleData: AnyObject = { 
   name: "tim", 
   age: 22, 
   address: { country: "japan", city: "tokyo" } 
 };
 
-const exampleDefaults: ObjectWithStringKeys = { 
+const exampleDefaults: AnyObject = { 
   age: 18, 
   address: { country: "mexico", zip: "12345678" } 
 };
 
 const result = simpleMerge(exampleData, exampleDefaults);
 console.log(result);
+-----------------------------------------------
+AnyObject Type Definition:
+This defines a type alias AnyObject which represents an object with string keys and values of any type.
+It is essentially saying that any object that follows this type can have keys that are strings, 
+and the values associated with these keys can be of any type.
+simpleMerge Function:
+
+The function takes two arguments, target and source, both of type AnyObject.
+It returns a new object that is the result of merging target and source.
+Object.keys({ ...target, ...source }):
+
+This line spreads the keys of both target and source into a new object, effectively combining the keys of both objects.
+Object.keys is then used to get an array of these combined keys.
+reduce Function:
+
+The reduce method is called on the array of keys.
+It takes an initial value, an empty object {}, which will be the merged object.
+For each key in the array, it checks if the values in both target and source for that key are objects and not null.
+Recursive Merge:
+
+If both target[key] and source[key] are objects, the function calls itself recursively to merge those nested objects.
+If not, it assigns the value from target[key] if it is not undefined; otherwise, it assigns the value from source[key].
+Return merged Object:
+
+The reduce method returns the merged object, which is the result of merging all the keys and their corresponding values from target and source.
+Example Usage
+typescript
+Copy code
+const exampleData: AnyObject = { 
+  name: "tim", 
+  age: 22, 
+  address: { country: "japan", city: "tokyo" } 
+};
+
+const exampleDefaults: AnyObject = { 
+  age: 18, 
+  address: { country: "mexico", zip: "12345678" } 
+};
+
+const result = simpleMerge(exampleData, exampleDefaults);
+console.log(result);
+exampleData and exampleDefaults:
+
+These are example objects that we want to merge.
+exampleData has properties: name, age, and address (which is an object with country and city).
+exampleDefaults has properties: age and address (which is an object with country and zip).
+Call to simpleMerge:
+
+The simpleMerge function is called with exampleData and exampleDefaults.
+The function merges these two objects based on the logic defined above.
+console.log(result):
+
+This prints the result of the merge to the console.
+Result Explanation
+After merging, the result object will look like this:
+
+name: Taken from exampleData.
+age: Taken from exampleData because it overrides the value in exampleDefaults.
+address: Merged object where:
+country: Taken from exampleData.
+city: Taken from exampleData.
+zip: Taken from exampleDefaults.
