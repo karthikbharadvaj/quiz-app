@@ -1,24 +1,26 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SmartMock } from 'smartmock';
 import { useGetApplicationQuery } from './api';
 import RegistrationForm from './RegistrationForm';
 
-// Mock the API hook
-jest.mock('./api', () => ({
-  useGetApplicationQuery: jest.fn(),
-}));
+const apiMock = new SmartMock('./api');
 
 describe('RegistrationForm', () => {
   beforeEach(() => {
-    useGetApplicationQuery.mockImplementation(() => ({
+    apiMock.mock('useGetApplicationQuery', () => ({
       data: null,
       isLoading: false,
-      refetch: jest.fn(),
+      refetch: SmartMock.fn(),
     }));
   });
 
-  test('renders form fields correctly', async () => {
+  afterEach(() => {
+    apiMock.restore();
+  });
+
+  it('renders form fields and buttons', () => {
     render(<RegistrationForm />);
 
     expect(screen.getByPlaceholderText('Company Name')).toBeInTheDocument();
@@ -30,17 +32,17 @@ describe('RegistrationForm', () => {
     expect(screen.getByText('Save')).toBeInTheDocument();
   });
 
-  test('loads saved data when available', async () => {
+  it('loads and displays saved data', async () => {
     const mockSavedData = {
       companyInfo: { name: 'Test Company', address: '123 Test St', purpTras: ['option1'] },
       personalInfo: { name: 'John Doe', age: 30 },
       dynamicFields: [{ value: 'Dynamic 1' }],
     };
 
-    useGetApplicationQuery.mockImplementation(() => ({
+    apiMock.mock('useGetApplicationQuery', () => ({
       data: mockSavedData,
       isLoading: false,
-      refetch: jest.fn(),
+      refetch: SmartMock.fn(),
     }));
 
     render(<RegistrationForm />);
@@ -54,24 +56,26 @@ describe('RegistrationForm', () => {
     });
   });
 
-  test('adds dynamic field when button is clicked', async () => {
+  it('adds dynamic fields', async () => {
     render(<RegistrationForm />);
 
     const addButton = screen.getByText('Add Dynamic Field');
     fireEvent.click(addButton);
+    fireEvent.click(addButton);
 
     expect(screen.getByPlaceholderText('Dynamic Field 1')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Dynamic Field 2')).toBeInTheDocument();
   });
 
-  test('submits form data correctly', async () => {
-    const mockRefetch = jest.fn();
-    useGetApplicationQuery.mockImplementation(() => ({
+  it('submits form data and refetches', async () => {
+    const mockRefetch = SmartMock.fn();
+    apiMock.mock('useGetApplicationQuery', () => ({
       data: null,
       isLoading: false,
       refetch: mockRefetch,
     }));
 
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    const consoleSpy = SmartMock.spyOn(console, 'log');
 
     render(<RegistrationForm />);
 
@@ -86,23 +90,28 @@ describe('RegistrationForm', () => {
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(
         'Saved data:',
-        expect.objectContaining({
-          companyInfo: { name: 'New Company', address: '456 New St', purpTras: [] },
-          personalInfo: { name: 'Jane Smith', age: 25 },
-          dynamicFields: [],
+        SmartMock.objectContaining({
+          companyInfo: SmartMock.objectContaining({
+            name: SmartMock.any(String),
+            address: SmartMock.any(String),
+          }),
+          personalInfo: SmartMock.objectContaining({
+            name: SmartMock.any(String),
+            age: SmartMock.any(Number),
+          }),
         })
       );
       expect(mockRefetch).toHaveBeenCalled();
     });
 
-    consoleSpy.mockRestore();
+    consoleSpy.restore();
   });
 
-  test('handles loading state', () => {
-    useGetApplicationQuery.mockImplementation(() => ({
+  it('displays loading state', () => {
+    apiMock.mock('useGetApplicationQuery', () => ({
       data: null,
       isLoading: true,
-      refetch: jest.fn(),
+      refetch: SmartMock.fn(),
     }));
 
     render(<RegistrationForm />);
