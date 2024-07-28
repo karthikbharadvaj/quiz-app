@@ -1,121 +1,91 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { SmartMock } from 'smartmock';
-import { useGetApplicationQuery } from './api';
-import RegistrationForm from './RegistrationForm';
+import { render, fireEvent, waitFor } from '@testing-library/react';
+import { SmartMock } from 'smart-mock';
+import { configs } from '../configs';
+import { ApplyFormData } from '../types';
+import { MainForm } from './MainForm';
 
-const apiMock = new SmartMock('./api');
+describe('MainForm', () => {
+  const defaultData: ApplyFormData = {
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+  };
 
-describe('RegistrationForm', () => {
+  const mockData: ApplyFormData = {
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    phone: '',
+    address: '',
+  };
+
   beforeEach(() => {
-    apiMock.mock('useGetApplicationQuery', () => ({
-      data: null,
-      isLoading: false,
-      refetch: SmartMock.fn(),
-    }));
+    resizeScreenSize(1000);
   });
 
-  afterEach(() => {
-    apiMock.restore();
-  });
-
-  it('renders form fields and buttons', () => {
-    render(<RegistrationForm />);
-
-    expect(screen.getByPlaceholderText('Company Name')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Company Address')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Personal Name')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Age')).toBeInTheDocument();
-    expect(screen.getByRole('listbox')).toBeInTheDocument();
-    expect(screen.getByText('Add Dynamic Field')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
-  });
-
-  it('loads and displays saved data', async () => {
-    const mockSavedData = {
-      companyInfo: { name: 'Test Company', address: '123 Test St', purpTras: ['option1'] },
-      personalInfo: { name: 'John Doe', age: 30 },
-      dynamicFields: [{ value: 'Dynamic 1' }],
-    };
-
-    apiMock.mock('useGetApplicationQuery', () => ({
-      data: mockSavedData,
-      isLoading: false,
-      refetch: SmartMock.fn(),
-    }));
-
-    render(<RegistrationForm />);
-
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText('Company Name')).toHaveValue('Test Company');
-      expect(screen.getByPlaceholderText('Company Address')).toHaveValue('123 Test St');
-      expect(screen.getByPlaceholderText('Personal Name')).toHaveValue('John Doe');
-      expect(screen.getByPlaceholderText('Age')).toHaveValue('30');
-      expect(screen.getByPlaceholderText('Dynamic Field 1')).toHaveValue('Dynamic 1');
+  it('mocking a saved data and verifying consistency', async () => {
+    // Mock the API call
+    SmartMock.get({
+      url: `${configs.network.WEB_APP_PATH}/api/main-form`,
+      resStatusCode: 200,
+      resBody: mockData,
     });
-  });
 
-  it('adds dynamic fields', async () => {
-    render(<RegistrationForm />);
+    // Render the MainForm component
+    const { getByLabelText, getByText } = render(<MainForm />);
 
-    const addButton = screen.getByText('Add Dynamic Field');
-    fireEvent.click(addButton);
-    fireEvent.click(addButton);
-
-    expect(screen.getByPlaceholderText('Dynamic Field 1')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Dynamic Field 2')).toBeInTheDocument();
-  });
-
-  it('submits form data and refetches', async () => {
-    const mockRefetch = SmartMock.fn();
-    apiMock.mock('useGetApplicationQuery', () => ({
-      data: null,
-      isLoading: false,
-      refetch: mockRefetch,
-    }));
-
-    const consoleSpy = SmartMock.spyOn(console, 'log');
-
-    render(<RegistrationForm />);
-
-    await userEvent.type(screen.getByPlaceholderText('Company Name'), 'New Company');
-    await userEvent.type(screen.getByPlaceholderText('Company Address'), '456 New St');
-    await userEvent.type(screen.getByPlaceholderText('Personal Name'), 'Jane Smith');
-    await userEvent.type(screen.getByPlaceholderText('Age'), '25');
-
-    const saveButton = screen.getByText('Save');
+    // Simulate saving or reloading data
+    const saveButton = getByText('Save');
     fireEvent.click(saveButton);
 
-    await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Saved data:',
-        SmartMock.objectContaining({
-          companyInfo: SmartMock.objectContaining({
-            name: SmartMock.any(String),
-            address: SmartMock.any(String),
-          }),
-          personalInfo: SmartMock.objectContaining({
-            name: SmartMock.any(String),
-            age: SmartMock.any(Number),
-          }),
-        })
-      );
-      expect(mockRefetch).toHaveBeenCalled();
-    });
+    // Wait for the API call to complete
+    await waitFor(() => expect(SmartMock.history.get).toHaveBeenCalledTimes(1));
 
-    consoleSpy.restore();
-  });
+    // Assert that the API was called
+    expect(SmartMock.history.get).toHaveBeenCalledWith(`${configs.network.WEB_APP_PATH}/api/main-form`);
 
-  it('displays loading state', () => {
-    apiMock.mock('useGetApplicationQuery', () => ({
-      data: null,
-      isLoading: true,
-      refetch: SmartMock.fn(),
-    }));
+    // Get the rendered data from the screen
+    const renderedData = getRenderedData(getByLabelText);
 
-    render(<RegistrationForm />);
+    // Verify that the rendered data is a combination of saved data and default data
+    const expectedRenderedData: ApplyFormData = {
+      ...defaultData,
+      ...mockData,
+    };
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(renderedData).toEqual(expectedRenderedData);
+
+    // Simulate saving or reloading data again
+    fireEvent.click(saveButton);
+
+    // Wait for the API call to complete
+    await waitFor(() => expect(SmartMock.history.get).toHaveBeenCalledTimes(2));
+
+    // Assert that the API was called again
+    expect(SmartMock.history.get).toHaveBeenCalledTimes(2);
+    expect(SmartMock.history.get).toHaveBeenNthCalledWith(2, `${configs.network.WEB_APP_PATH}/api/main-form`);
+
+    // Get the reloaded data from the screen
+    const reloadedData = getRenderedData(getByLabelText);
+
+    // Verify that the reloaded data matches the saved data
+    expect(reloadedData).toEqual(renderedData);
   });
 });
+
+// Helper function to get the rendered data from the screen
+function getRenderedData(getByLabelText: (labelText: string) => HTMLElement) {
+  const nameInput = getByLabelText('Name') as HTMLInputElement;
+  const emailInput = getByLabelText('Email') as HTMLInputElement;
+  const phoneInput = getByLabelText('Phone') as HTMLInputElement;
+  const addressInput = getByLabelText('Address') as HTMLInputElement;
+
+  return {
+    name: nameInput.value,
+    email: emailInput.value,
+    phone: phoneInput.value,
+    address: addressInput.value,
+  };
+}
+
+Explain
