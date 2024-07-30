@@ -1,8 +1,25 @@
+import React from 'eact';
 import { render, fireEvent, waitFor } from '@testing-library/react';
-import { SmartMock } from 'smart-mock';
-import { configs } from '../configs';
-import { ApplyFormData } from '../types';
-import { MainForm } from './MainForm';
+import { rest } from 'sw';
+import { setupServer } from 'sw/node';
+import userEvent from '@testing-library/user-event';
+import MainForm from './MainForm'; // Your component
+import { mergeWithDefaults } from './utils'; // Assuming a utility function to merge data
+
+const server = setupServer(
+  rest.get('/api/data', (req, res, ctx) => {
+    // Mock API response for GET requests
+    return res(ctx.json({ /* default or mock data */ }));
+  }),
+  rest.post('/api/data', (req, res, ctx) => {
+    // Mock API response for POST requests
+    return res(ctx.json({ /* saved or new data */ }));
+  })
+);
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 describe('MainForm', () => {
   const defaultData: ApplyFormData = {
@@ -23,69 +40,72 @@ describe('MainForm', () => {
     resizeScreenSize(1000);
   });
 
-  it('mocking a saved data and verifying consistency', async () => {
-    // Mock the API call
-    SmartMock.get({
-      url: `${configs.network.WEB_APP_PATH}/api/main-form`,
-      resStatusCode: 200,
-      resBody: mockData,
-    });
+  it('loads default data when no previous data saved', async () => {
+    // Arrange
+    server.use(
+      rest.get('/api/data', (req, res, ctx) => {
+        return res(ctx.json(defaultData));
+      })
+    );
 
-    // Render the MainForm component
-    const { getByLabelText, getByText } = render(<MainForm />);
+    // Act
+    const { getByPlaceholderText } = render(<MainForm />);
+    await waitFor(() => expect(getByPlaceholderText('Name')).toBeInTheDocument());
 
-    // Simulate saving or reloading data
-    const saveButton = getByText('Save');
-    fireEvent.click(saveButton);
+    // Assert
+    expect(getByPlaceholderText('Name')).toHaveValue('');
+    expect(getByPlaceholderText('Email')).toHaveValue('');
+    expect(getByPlaceholderText('Phone')).toHaveValue('');
+    expect(getByPlaceholderText('Address')).toHaveValue('');
+  });
 
-    // Wait for the API call to complete
-    await waitFor(() => expect(SmartMock.history.get).toHaveBeenCalledTimes(1));
+  it('loads saved data when available', async () => {
+    // Arrange
+    server.use(
+      rest.get('/api/data', (req, res, ctx) => {
+        return res(ctx.json(mockData));
+      })
+    );
 
-    // Assert that the API was called
-    expect(SmartMock.history.get).toHaveBeenCalledWith(`${configs.network.WEB_APP_PATH}/api/main-form`);
+    // Act
+    const { getByPlaceholderText } = render(<MainForm />);
+    await waitFor(() => expect(getByPlaceholderText('Name')).toBeInTheDocument());
 
-    // Get the rendered data from the screen
-    const renderedData = getRenderedData(getByLabelText);
+    // Assert
+    expect(getByPlaceholderText('Name')).toHaveValue('John Doe');
+    expect(getByPlaceholderText('Email')).toHaveValue('john.doe@example.com');
+    expect(getByPlaceholderText('Phone')).toHaveValue('');
+    expect(getByPlaceholderText('Address')).toHaveValue('');
+  });
 
-    // Verify that the rendered data is a combination of saved data and default data
-    const expectedRenderedData: ApplyFormData = {
-      ...defaultData,
-      ...mockData,
+  it('saves new data and prioritizes it', async () => {
+    // Arrange
+    const newData: ApplyFormData = {
+      name: 'Jane Doe',
+      email: 'jane.doe@example.com',
+      phone: '123-456-7890',
+      address: '123 Main St',
     };
+    const { getByPlaceholderText, getByText } = render(<MainForm />);
+    await userEvent.type(getByPlaceholderText('Name'), newData.name);
+    await userEvent.type(getByPlaceholderText('Email'), newData.email);
+    await userEvent.type(getByPlaceholderText('Phone'), newData.phone);
+    await userEvent.type(getByPlaceholderText('Address'), newData.address);
+    await userEvent.click(getByText('Save'));
 
-    expect(renderedData).toEqual(expectedRenderedData);
+    // Act & Assert
+    await waitFor(() => expect(getByPlaceholderText('Name')).toHaveValue(newData.name));
+    expect(getByPlaceholderText('Email')).toHaveValue(newData.email);
+    expect(getByPlaceholderText('Phone')).toHaveValue(newData.phone);
+    expect(getByPlaceholderText('Address')).toHaveValue(newData.address);
 
-    // Simulate saving or reloading data again
-    fireEvent.click(saveButton);
-
-    // Wait for the API call to complete
-    await waitFor(() => expect(SmartMock.history.get).toHaveBeenCalledTimes(2));
-
-    // Assert that the API was called again
-    expect(SmartMock.history.get).toHaveBeenCalledTimes(2);
-    expect(SmartMock.history.get).toHaveBeenNthCalledWith(2, `${configs.network.WEB_APP_PATH}/api/main-form`);
-
-    // Get the reloaded data from the screen
-    const reloadedData = getRenderedData(getByLabelText);
-
-    // Verify that the reloaded data matches the saved data
-    expect(reloadedData).toEqual(renderedData);
+    // Test mergeWithDefaults function
+    const mergedData = mergeWithDefaults(newData, defaultData);
+    expect(mergedData).toEqual({
+      name: 'Jane Doe',
+      email: 'jane.doe@example.com',
+      phone: '123-456-7890',
+      address: '123 Main St',
+    });
   });
 });
-
-// Helper function to get the rendered data from the screen
-function getRenderedData(getByLabelText: (labelText: string) => HTMLElement) {
-  const nameInput = getByLabelText('Name') as HTMLInputElement;
-  const emailInput = getByLabelText('Email') as HTMLInputElement;
-  const phoneInput = getByLabelText('Phone') as HTMLInputElement;
-  const addressInput = getByLabelText('Address') as HTMLInputElement;
-
-  return {
-    name: nameInput.value,
-    email: emailInput.value,
-    phone: phoneInput.value,
-    address: addressInput.value,
-  };
-}
-
-Explain
