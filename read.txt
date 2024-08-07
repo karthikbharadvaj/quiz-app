@@ -1,111 +1,51 @@
-import React from 'eact';
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import { rest } from 'sw';
-import { setupServer } from 'sw/node';
-import userEvent from '@testing-library/user-event';
-import MainForm from './MainForm'; // Your component
-import { mergeWithDefaults } from './utils'; // Assuming a utility function to merge data
+import { mergeWithDefaults } from './path_to_your_function'; // adjust the import path
 
-const server = setupServer(
-  rest.get('/api/data', (req, res, ctx) => {
-    // Mock API response for GET requests
-    return res(ctx.json({ /* default or mock data */ }));
-  }),
-  rest.post('/api/data', (req, res, ctx) => {
-    // Mock API response for POST requests
-    return res(ctx.json({ /* saved or new data */ }));
-  })
-);
+// Define test data and defaults
+const userData = {
+  username: 'testUser',
+  details: {
+    age: 25,
+    preferences: {
+      notifications: true
+    }
+  },
+  preferences: {
+    theme: 'dark'
+  }
+};
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+const defaultData = {
+  username: 'defaultUser',
+  details: {
+    age: 18,
+    preferences: {
+      notifications: false,
+      language: 'en'
+    }
+  },
+  preferences: {
+    theme: 'light',
+    fontSize: 12
+  }
+};
 
-describe('MainForm', () => {
-  const defaultData: ApplyFormData = {
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-  };
+// Expected merged result
+const expectedMergedData = {
+  username: 'testUser',
+  details: {
+    age: 25,
+    preferences: {
+      notifications: true,
+      language: 'en'
+    }
+  },
+  preferences: {
+    theme: 'dark',
+    fontSize: 12
+  }
+};
 
-  const mockData: ApplyFormData = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '',
-    address: '',
-  };
+// Run the test
+const result = mergeWithDefaults(userData, defaultData);
 
-  beforeEach(() => {
-    resizeScreenSize(1000);
-  });
-
-  it('loads default data when no previous data saved', async () => {
-    // Arrange
-    server.use(
-      rest.get('/api/data', (req, res, ctx) => {
-        return res(ctx.json(defaultData));
-      })
-    );
-
-    // Act
-    const { getByPlaceholderText } = render(<MainForm />);
-    await waitFor(() => expect(getByPlaceholderText('Name')).toBeInTheDocument());
-
-    // Assert
-    expect(getByPlaceholderText('Name')).toHaveValue('');
-    expect(getByPlaceholderText('Email')).toHaveValue('');
-    expect(getByPlaceholderText('Phone')).toHaveValue('');
-    expect(getByPlaceholderText('Address')).toHaveValue('');
-  });
-
-  it('loads saved data when available', async () => {
-    // Arrange
-    server.use(
-      rest.get('/api/data', (req, res, ctx) => {
-        return res(ctx.json(mockData));
-      })
-    );
-
-    // Act
-    const { getByPlaceholderText } = render(<MainForm />);
-    await waitFor(() => expect(getByPlaceholderText('Name')).toBeInTheDocument());
-
-    // Assert
-    expect(getByPlaceholderText('Name')).toHaveValue('John Doe');
-    expect(getByPlaceholderText('Email')).toHaveValue('john.doe@example.com');
-    expect(getByPlaceholderText('Phone')).toHaveValue('');
-    expect(getByPlaceholderText('Address')).toHaveValue('');
-  });
-
-  it('saves new data and prioritizes it', async () => {
-    // Arrange
-    const newData: ApplyFormData = {
-      name: 'Jane Doe',
-      email: 'jane.doe@example.com',
-      phone: '123-456-7890',
-      address: '123 Main St',
-    };
-    const { getByPlaceholderText, getByText } = render(<MainForm />);
-    await userEvent.type(getByPlaceholderText('Name'), newData.name);
-    await userEvent.type(getByPlaceholderText('Email'), newData.email);
-    await userEvent.type(getByPlaceholderText('Phone'), newData.phone);
-    await userEvent.type(getByPlaceholderText('Address'), newData.address);
-    await userEvent.click(getByText('Save'));
-
-    // Act & Assert
-    await waitFor(() => expect(getByPlaceholderText('Name')).toHaveValue(newData.name));
-    expect(getByPlaceholderText('Email')).toHaveValue(newData.email);
-    expect(getByPlaceholderText('Phone')).toHaveValue(newData.phone);
-    expect(getByPlaceholderText('Address')).toHaveValue(newData.address);
-
-    // Test mergeWithDefaults function
-    const mergedData = mergeWithDefaults(newData, defaultData);
-    expect(mergedData).toEqual({
-      name: 'Jane Doe',
-      email: 'jane.doe@example.com',
-      phone: '123-456-7890',
-      address: '123 Main St',
-    });
-  });
-});
+console.log('Test passed:', JSON.stringify(result) === JSON.stringify(expectedMergedData));
