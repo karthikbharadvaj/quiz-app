@@ -1,3 +1,9 @@
+npm install lodash
+import { merge } from 'lodash';
+
+export function mergeWithDefaults(data: any, defaults: any): any {
+    return merge({}, defaults, data);
+}
 
 Certainly. Let's break down the mergeWithDefaults function step-by-step:
 
