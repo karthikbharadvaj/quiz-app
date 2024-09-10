@@ -1,129 +1,57 @@
-To implement a dummy permission system directly within a TypeScript React graph component file, where specific statuses (1, 2, 3) determine whether to display or hide the graph based on user permissions, you can create a component that checks both permissions and statuses before rendering. Below is an example of how you can achieve this:
+import QRCode from 'qrcode';
+import React, { useEffect, useState } from 'react';
 
-Graph.tsx
-In this example, we'll create a Graph component that checks user permissions and specific statuses (1, 2, 3) to determine whether to display or hide the graph.
+/**
+ * Custom hook to generate QR code data URL
+ * @param referenceNumber - The reference number to encode in the QR code
+ * @returns The generated QR code data URL or an empty string
+ */
+const useQRCode = (referenceNumber: string | undefined): string => {
+  const [qrCodeDataURL, setQRCodeDataURL] = useState<string>('');
 
-tsx
-Copy code
-import React from 'react';
-import { usePermissionManager } from './PermissionManagerContext';
+  useEffect(() => {
+    const generateQRCode = async () => {
+      if (referenceNumber) {
+        try {
+          const dataURL = await QRCode.toDataURL(referenceNumber, {
+            errorCorrectionLevel: 'high',
+            type: 'image/png',
+          });
+          setQRCodeDataURL(dataURL);
+        } catch (error) {
+          console.error('Error generating QR code:', error);
+          setQRCodeDataURL('');
+        }
+      } else {
+        setQRCodeDataURL('');
+      }
+    };
 
-interface GraphProps {
-  statuses: number[]; // Array of statuses (1, 2, 3)
+    generateQRCode();
+  }, [referenceNumber]);
+
+  return qrCodeDataURL;
+};
+
+// Interface as defined in a different file
+interface IdentityProp {
+  qr: string;
+  procedureCode?: string;
 }
 
-const Graph: React.FC<GraphProps> = ({ statuses }) => {
-  const { hasPermission } = usePermissionManager();
-
-  // Define the statuses that should hide the graph
-  const statusesToHideGraph = [1, 2, 3];
-
-  // Check if the user has permission to view the graph
-  const canViewGraph = hasPermission('viewGraph');
-
-  // Check if any of the provided statuses require hiding the graph
-  const shouldHideGraph = statuses.some((status) => statusesToHideGraph.includes(status));
-
-  // Determine whether to render the graph based on permissions and statuses
-  if (canViewGraph && !shouldHideGraph) {
-    return (
-      <div>
-        <h2>Graph Component</h2>
-        {/* Your graph implementation */}
-        <p>This is where your graph content goes...</p>
-      </div>
-    );
-  } else {
-    return <p>You do not have permission to view the graph.</p>;
-  }
-};
-
-export default Graph;
-In this Graph component:
-
-We define a functional component that accepts statuses as props, which represents an array of statuses (1, 2, 3).
-We use the usePermissionManager hook from the PermissionManagerContext to check if the user has the 'viewGraph' permission.
-We specify statusesToHideGraph, an array containing statuses (1, 2, 3) that should hide the graph.
-We check whether the user has permission to view the graph (canViewGraph) and whether any of the provided statuses require hiding the graph (shouldHideGraph).
-Based on these conditions, we render the graph content if both conditions are met, otherwise display a message indicating lack of permission or appropriate statuses to view the graph.
-PermissionManagerContext.tsx
-This is the permission management context file providing the PermissionManagerProvider and usePermissionManager hook used by the Graph component.
-
-tsx
-Copy code
-import React, { createContext, useContext, useState } from 'react';
-
-// Define type for permissions
-type Permission = 'viewGraph';
-
-// Define context type
-interface PermissionContextType {
-  permissions: Set<Permission>;
-  grantPermission: (permission: Permission) => void;
-  hasPermission: (permission: Permission) => boolean;
-}
-
-// Create context
-const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
-
-// Custom hook to use permission context
-export const usePermissionManager = () => {
-  const context = useContext(PermissionContext);
-  if (!context) {
-    throw new Error('usePermissionManager must be used within a PermissionManagerProvider');
-  }
-  return context;
-};
-
-// PermissionManagerProvider component
-export const PermissionManagerProvider: React.FC = ({ children }) => {
-  const [permissions, setPermissions] = useState<Set<Permission>>(new Set());
-
-  const grantPermission = (permission: Permission) => {
-    setPermissions((prevPermissions) => new Set([...prevPermissions, permission]));
-  };
-
-  const hasPermission = (permission: Permission) => {
-    return permissions.has(permission);
-  };
-
-  const permissionContextValue: PermissionContextType = {
-    permissions,
-    grantPermission,
-    hasPermission,
-  };
+// Example usage
+const ExampleComponent: React.FC<{ referenceNumber: string | undefined }> = ({ referenceNumber }) => {
+  const qrCodeDataURL = useQRCode(referenceNumber);
 
   return (
-    <PermissionContext.Provider value={permissionContextValue}>
-      {children}
-    </PermissionContext.Provider>
-  );
-};
-Usage Example
-Here's an example of how you can use the Graph component within your application, providing the necessary statuses and managing permissions through the PermissionManagerProvider.
-
-tsx
-Copy code
-import React from 'react';
-import Graph from './Graph';
-import { PermissionManagerProvider } from './PermissionManagerContext';
-
-const App: React.FC = () => {
-  return (
-    <PermissionManagerProvider>
-      <div>
-        <h1>Graph Example</h1>
-        {/* Provide appropriate statuses and render the Graph component */}
-        <Graph statuses={[1, 2, 3]} />
-      </div>
-    </PermissionManagerProvider>
+    <div>
+      <IdentityProp
+        qr={qrCodeDataURL}
+        procedureCode={referenceNumber}
+      />
+      {qrCodeDataURL && <img src={qrCodeDataURL} alt="QR Code" />}
+    </div>
   );
 };
 
-export default App;
-In this setup:
-
-The App component wraps the Graph component with the PermissionManagerProvider to manage permissions.
-The Graph component checks both user permissions ('viewGraph') and specific statuses provided via props to determine whether to render the graph content.
-The permission management logic is encapsulated within the PermissionManagerContext, allowing for easy integration and management of permissions across components.
-You can expand this example by adding more complex permission logic, integrating authentication systems, or enhancing the permission management based on your application's requirements. This approach provides a flexible and scalable way to control component visibility based on user permissions and dynamic statuses. Adjust the conditions and statuses as needed to fit your specific use case.
+export { useQRCode, ExampleComponent };
