@@ -1,102 +1,15 @@
-この関数は、データとデフォルトの 2 つのオブジェクトをマージします。データの値を優先しますが、データに存在しない場合はデフォルトの値を使用します。
-関数の構造:
-Object.keys() と Reduce() を使用して、両方のオブジェクトのすべてのキーを反復処理します。
-各キーに対して、次の 3 つの処理のいずれかを実行します。
-a. キーがデータとデフォルトの両方に存在し、両方の値がオブジェクト (配列ではない) である場合:
+const originalFetch = window.fetch;
 
-これらのネストされたオブジェクトに対して mergeWithDefaults を再帰的に呼び出します。
+// Override the fetch function
+window.fetch = async (...args) => {
+  console.log('Fetching:', args[0]);  // Log the URL or request details
 
-b. キーがデータに存在する場合:
+  const response = await originalFetch(...args);
 
-データの値を使用します。
+  const clonedResponse = response.clone(); // Clone the response to read it
+  clonedResponse.json().then((data) => {
+    console.log('API Response:', data);  // Log the response data
+  });
 
-c. キーがデータに存在しない場合:
-
-デフォルトの値を使用します。
-
-簡単に言えば、この関数は 2 つのオブジェクトを受け取り、両方のすべてのプロパティを持つ新しいオブジェクトを作成します。 両方のオブジェクトにプロパティが存在する場合は、データのプロパティが優先されます。プロパティがデータとデフォルトの両方のオブジェクトである場合は、これらのネストされたオブジェクトを再帰的にマージします。
-
-
-npm install lodash
-import { merge } from 'lodash';
-
-export function mergeWithDefaults(data: any, defaults: any): any {
-    return merge({}, defaults, data);
-}
-
-Certainly. Let's break down the mergeWithDefaults function step-by-step:
-
-Function Purpose:
-This function merges two objects: data and defaults. It prioritizes values from data, but uses values from defaults when they're not present in data.
-Function Structure:
-It uses Object.keys() and reduce() to iterate through all keys in both objects.
-For each key, it does one of three things:
-a. If the key exists in both data and defaults, and both values are objects (but not arrays):
-
-It recursively calls mergeWithDefaults on these nested objects.
-
-b. If the key exists in data:
-
-It uses the value from data.
-
-c. If the key doesn't exist in data:
-
-It uses the value from defaults.
-
-
-The result is a new object that combines data and defaults, with data taking priority.
-Special note: The initial value of the reduce function is {} (an empty object), not 0 as shown in the provided code.
-
-In simpler terms, this function takes two objects and creates a new object that has all the properties of both. If a property exists in both objects, it prefers the one from data. If a property is an object in both data and defaults, it merges these nested objects recursively.
-
-import { mergeWithDefaults } from './path_to_your_function'; // adjust the import path
-
-// Define test data and defaults
-const userData = {
-  username: 'testUser',
-  details: {
-    age: 25,
-    preferences: {
-      notifications: true
-    }
-  },
-  preferences: {
-    theme: 'dark'
-  }
+  return response;  // Return the original response so the app works normally
 };
-
-const defaultData = {
-  username: 'defaultUser',
-  details: {
-    age: 18,
-    preferences: {
-      notifications: false,
-      language: 'en'
-    }
-  },
-  preferences: {
-    theme: 'light',
-    fontSize: 12
-  }
-};
-
-// Expected merged result
-const expectedMergedData = {
-  username: 'testUser',
-  details: {
-    age: 25,
-    preferences: {
-      notifications: true,
-      language: 'en'
-    }
-  },
-  preferences: {
-    theme: 'dark',
-    fontSize: 12
-  }
-};
-
-// Run the test
-const result = mergeWithDefaults(userData, defaultData);
-
-console.log('Test passed:', JSON.stringify(result) === JSON.stringify(expectedMergedData));
