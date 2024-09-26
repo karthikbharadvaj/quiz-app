@@ -1,15 +1,10 @@
-const originalFetch = window.fetch;
-
-// Override the fetch function
-window.fetch = async (...args) => {
-  console.log('Fetching:', args[0]);  // Log the URL or request details
-
-  const response = await originalFetch(...args);
-
-  const clonedResponse = response.clone(); // Clone the response to read it
-  clonedResponse.json().then((data) => {
-    console.log('API Response:', data);  // Log the response data
-  });
-
-  return response;  // Return the original response so the app works normally
-};
+function logApiEndpoint(url: string = window.location.href): void {
+  const apiPattern = /\/api\/[^\?#]*/;
+  const match = url.match(apiPattern);
+  
+  if (match) {
+    console.log('API Endpoint:', match[0]);
+  } else {
+    console.log('No API endpoint found in the URL');
+  }
+}
