@@ -1,10 +1,21 @@
-function logApiEndpoint(url: string = window.location.href): void {
-  const apiPattern = /\/api\/[^\?#]*/;
-  const match = url.match(apiPattern);
+function logUrlSegments(url: string = window.location.href): void {
+  const parsedUrl = new URL(url);
+  const pathSegments = parsedUrl.pathname.split('/').filter(segment => segment);
   
-  if (match) {
-    console.log('API Endpoint:', match[0]);
-  } else {
-    console.log('No API endpoint found in the URL');
+  console.log('URL:', url);
+  console.log('Path segments:');
+  pathSegments.forEach((segment, index) => {
+    console.log(`  ${index + 1}: ${segment}`);
+  });
+  
+  if (parsedUrl.search) {
+    console.log('Query parameters:', parsedUrl.search);
+  }
+  
+  if (parsedUrl.hash) {
+    console.log('Hash:', parsedUrl.hash);
   }
 }
+
+// Usage example
+logUrlSegments();
