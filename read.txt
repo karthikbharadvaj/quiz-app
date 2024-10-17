@@ -1,21 +1,79 @@
-function logUrlSegments(url: string = window.location.href): void {
-  const parsedUrl = new URL(url);
-  const pathSegments = parsedUrl.pathname.split('/').filter(segment => segment);
-  
-  console.log('URL:', url);
-  console.log('Path segments:');
-  pathSegments.forEach((segment, index) => {
-    console.log(`  ${index + 1}: ${segment}`);
-  });
-  
-  if (parsedUrl.search) {
-    console.log('Query parameters:', parsedUrl.search);
-  }
-  
-  if (parsedUrl.hash) {
-    console.log('Hash:', parsedUrl.hash);
-  }
+To achieve the desired functionality with sub-contents in your InformationContainer component, you'll need to modify your component slightly. Here’s an updated version of your code that handles both main content and sub-contents while using Box and Typography components.
+
+Updated InformationContainer.tsx
+
+import React, { FC } from 'react';
+import { Box, Typography } from '@mui/material';
+
+interface ContentItem {
+  content: string;
+  subContents?: string[];
 }
 
-// Usage example
-logUrlSegments();
+interface TextProps {
+  title: string;
+  contents: ContentItem[];
+}
+
+const InformationContainer: FC<TextProps> = ({ title, contents }) => {
+  return (
+    <Box>
+      <Typography color="#818181" sx={{ mb: 1 }}>
+        {title}
+      </Typography>
+      {contents.map(({ content, subContents }) => (
+        <Box key={content} sx={{ mb: 2 }}>
+          <Typography color="#2E3540" sx={{ mb: 1 }}>
+            • {content}
+          </Typography>
+          {subContents && (
+            <Box sx={{ pl: 2 }}>
+              {subContents.map((subContent) => (
+                <Typography key={subContent} color="#2E3540" sx={{ mb: 1 }}>
+                  ◦ {subContent}
+                </Typography>
+              ))}
+            </Box>
+          )}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+export default InformationContainer;
+
+Explanation of Changes:
+
+1. ContentItem Interface: Now includes subContents?: string[], allowing each main content item to optionally have sub-contents.
+
+
+2. Main and Sub-Contents:
+
+For each content, we check if subContents exist. If they do, we render them inside a nested <Box> component with indentation (pl: 2).
+
+Sub-contents are displayed with a slightly different bullet style (◦).
+
+
+
+3. Styling Adjustments:
+
+Added a margin bottom (mb: 2) for spacing between each main content block.
+
+The pl: 2 in the sub-contents gives a visual indentation.
+
+
+
+
+Usage Example:
+
+const contents = [
+  { content: 'メッセージ' },
+  { content: 'おすすめイベント', subContents: ['イベント詳細', '特別オファー'] },
+  { content: '今日参加できるイベント' },
+];
+
+<InformationContainer title="表示情報" contents={contents} />
+
+This will create a list with both main content and sub-content, using Material UI components (Box, Typography). You can further customize the colors, spacing, or styles to fit your design requirements.
+
