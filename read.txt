@@ -1,79 +1,72 @@
-To achieve the desired functionality with sub-contents in your InformationContainer component, you'll need to modify your component slightly. Here’s an updated version of your code that handles both main content and sub-contents while using Box and Typography components.
+c. Repository (repositories/applicationFormRepository.ts)
+The repository handles direct interactions with the database.
 
-Updated InformationContainer.tsx
+typescript
+Copy code
+import { ApplicationForm } from '../models/applicationForm';
 
-import React, { FC } from 'react';
-import { Box, Typography } from '@mui/material';
-
-interface ContentItem {
-  content: string;
-  subContents?: string[];
+export class ApplicationFormRepository {
+  async deleteApplicationFormById(formId: string): Promise<boolean> {
+    const result = await ApplicationForm.deleteOne({ formId });
+    return result.deletedCount > 0;
+  }
 }
+d. Use Case (useCases/deleteApplicationForm.ts)
+The use case contains the business logic.
 
-interface TextProps {
-  title: string;
-  contents: ContentItem[];
+typescript
+Copy code
+import { ApplicationFormRepository } from '../repositories/applicationFormRepository';
+
+export class DeleteApplicationForm {
+  private repository: ApplicationFormRepository;
+
+  constructor(repository: ApplicationFormRepository) {
+    this.repository = repository;
+  }
+
+  async execute(formId: string): Promise<boolean> {
+    return await this.repository.deleteApplicationFormById(formId);
+  }
 }
+e. Controller (controllers/applicationFormController.ts)
+The controller processes the API requests and sends responses.
 
-const InformationContainer: FC<TextProps> = ({ title, contents }) => {
-  return (
-    <Box>
-      <Typography color="#818181" sx={{ mb: 1 }}>
-        {title}
-      </Typography>
-      {contents.map(({ content, subContents }) => (
-        <Box key={content} sx={{ mb: 2 }}>
-          <Typography color="#2E3540" sx={{ mb: 1 }}>
-            • {content}
-          </Typography>
-          {subContents && (
-            <Box sx={{ pl: 2 }}>
-              {subContents.map((subContent) => (
-                <Typography key={subContent} color="#2E3540" sx={{ mb: 1 }}>
-                  ◦ {subContent}
-                </Typography>
-              ))}
-            </Box>
-          )}
-        </Box>
-      ))}
-    </Box>
-  );
-};
+typescript
+Copy code
+import { Request, Response } from 'express';
+import { DeleteApplicationForm } from '../useCases/deleteApplicationForm';
+import { ApplicationFormRepository } from '../repositories/applicationFormRepository';
 
-export default InformationContainer;
+const repository = new ApplicationFormRepository();
+const deleteApplicationFormUseCase = new DeleteApplicationForm(repository);
 
-Explanation of Changes:
+export class ApplicationFormController {
+  static async deleteApplicationForm(req: Request, res: Response) {
+    try {
+      const { formId } = req.params;
+      const success = await deleteApplicationFormUseCase.execute(formId);
 
-1. ContentItem Interface: Now includes subContents?: string[], allowing each main content item to optionally have sub-contents.
+      if (success) {
+        return res.status(200).json({ message: 'Application Form deleted successfully' });
+      } else {
+        return res.status(404).json({ message: 'Application Form not found' });
+      }
+    } catch (error) {
+      return res.status(500).json({ message: 'Internal Server Error', error });
+    }
+  }
+}
+f. Route (routes/applicationFormRoutes.ts)
+Define the API route for deletion.
 
+typescript
+Copy code
+import express from 'express';
+import { ApplicationFormController } from '../controllers/applicationFormController';
 
-2. Main and Sub-Contents:
+const router = express.Router();
 
-For each content, we check if subContents exist. If they do, we render them inside a nested <Box> component with indentation (pl: 2).
+router.delete('/application-form/:formId', ApplicationFormController.deleteApplicationForm);
 
-Sub-contents are displayed with a slightly different bullet style (◦).
-
-
-
-3. Styling Adjustments:
-
-Added a margin bottom (mb: 2) for spacing between each main content block.
-
-The pl: 2 in the sub-contents gives a visual indentation.
-
-
-
-
-Usage Example:
-
-const contents = [
-  { content: 'メッセージ' },
-  { content: 'おすすめイベント', subContents: ['イベント詳細', '特別オファー'] },
-  { content: '今日参加できるイベント' },
-];
-
-<InformationContainer title="表示情報" contents={contents} />
-
-This will create a list with both main content and sub-content, using Material UI components (Box, Typography). You can further customize the colors, spacing, or styles to fit your design requirements.
-
+export default router;
