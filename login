@@ -1,28 +1,49 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, TextField, Typography } from '@mui/material';
+import DefaultButton from '../components/buttons/DefaultButton';
 
-interface PaginationDotsProps {
-    activeIndex: number;
-    total: number;
-}
+const Login: React.FC = () => {
+    const handleLogin = () => {
+        // Handle login action (e.g., form submission or API call)
+        console.log('Login clicked');
+    };
 
-const PaginationDots: React.FC<PaginationDotsProps> = ({ activeIndex, total }) => {
     return (
-        <Box display="flex" justifyContent="center" mt={2}>
-            {Array.from({ length: total }).map((_, index) => (
-                <Box
-                    key={index}
-                    sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        backgroundColor: index === activeIndex ? '#429AD0' : '#c4c4c4',
-                        margin: '0 4px',
-                    }}
-                />
-            ))}
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                backgroundColor: '#eff3f4',
+                padding: 3,
+            }}
+        >
+            <Typography variant="h5" sx={{ mb: 3 }}>
+                Login
+            </Typography>
+
+            <TextField
+                label="ID"
+                placeholder="ID"
+                variant="outlined"
+                fullWidth
+                sx={{ mb: 2, backgroundColor: '#FFFFFF' }}
+            />
+            
+            <TextField
+                label="パスワード"
+                placeholder="パスワード"
+                type="password"
+                variant="outlined"
+                fullWidth
+                sx={{ mb: 3, backgroundColor: '#FFFFFF' }}
+            />
+            
+            <DefaultButton title="Login" onClick={handleLogin} />
         </Box>
     );
 };
 
-export default PaginationDots;
+export default Login;
