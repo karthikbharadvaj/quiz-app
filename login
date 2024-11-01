@@ -1,55 +1,30 @@
-import React from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import OnboardingContainer from './components/OnboardingContainer';
 
-interface OnboardingContainerProps {
-    title: string;
-    description: string;
-    buttonText: string;
-    buttonVariant: 'outlined' | 'contained'; // Specify variant based on the button type
-    onButtonClick: () => void;
-}
+const OnboardingScreen: React.FC = () => {
+    const [currentScreen, setCurrentScreen] = useState(0);
 
-const OnboardingContainer: React.FC<OnboardingContainerProps> = ({
-    title,
-    description,
-    buttonText,
-    buttonVariant,
-    onButtonClick,
-}) => {
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '100vh',
-                backgroundColor: '#eff3f4',
-                padding: 2,
-            }}
-        >
-            <Typography variant="h5" color="#818181" sx={{ mb: 1 }}>
-                {title}
-            </Typography>
-            <Typography variant="body1" color="textSecondary" align="center" sx={{ mb: 3 }}>
-                {description}
-            </Typography>
-            <Button
-                variant={buttonVariant}
-                sx={{
-                    width: '295px',
-                    height: '52px',
-                    borderRadius: '26px',
-                    backgroundColor: buttonVariant === 'contained' ? '#429AD0' : '#FFFFFF',
-                    color: buttonVariant === 'contained' ? '#FFFFFF' : '#429AD0',
-                    borderColor: '#429AD0',
-                }}
-                onClick={onButtonClick}
-            >
-                {buttonText}
-            </Button>
-        </Box>
+        <>
+            {currentScreen === 0 ? (
+                <OnboardingContainer
+                    title="このサービスの使い方"
+                    description="JRI内で同じ興味・趣味を持つ仲間を見つけられます。サークルを探したり、作ったりして、業務以外での関わりを作ることができます。"
+                    buttonText="次へ"
+                    buttonVariant="outlined"
+                    onButtonClick={() => setCurrentScreen(1)}
+                />
+            ) : (
+                <OnboardingContainer
+                    title="イベントに参加しよう！"
+                    description="サークルに参加したらそのサークルのイベントをチェックしましょう。積極的にイベントに参加すると新しい繋がりができるかもしれません。"
+                    buttonText="はじめる"
+                    buttonVariant="contained"
+                    onButtonClick={() => console.log('Navigate to login')}
+                />
+            )}
+        </>
     );
 };
 
-export default OnboardingContainer;
+export default OnboardingScreen;
