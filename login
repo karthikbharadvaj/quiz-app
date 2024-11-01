@@ -18,43 +18,53 @@ const LoginContainer: React.FC<LoginContainerProps> = ({
     onLogin 
 }) => {
     return (
-        <Box
-            sx={{
+        <div
+            style={{
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '100%',
-                maxWidth: '400px',
+                minHeight: '100vh',
                 backgroundColor: '#eff3f4',
-                padding: 3,
-                borderRadius: '8px',
-                boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
             }}
         >
-            <Typography variant="h5" sx={{ mb: 3 }}>
-                {title}
-            </Typography>
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    maxWidth: '400px',
+                    backgroundColor: '#FFFFFF',
+                    padding: 3,
+                    borderRadius: '8px',
+                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                }}
+            >
+                <Typography variant="h5" sx={{ mb: 3 }}>
+                    {title}
+                </Typography>
 
-            <TextField
-                label={idLabel}
-                placeholder={idLabel}
-                variant="outlined"
-                fullWidth
-                sx={{ mb: 2, backgroundColor: '#FFFFFF' }}
-            />
+                <TextField
+                    label={idLabel}
+                    placeholder={idLabel}
+                    variant="outlined"
+                    fullWidth
+                    sx={{ mb: 2, backgroundColor: '#FFFFFF' }}
+                />
 
-            <TextField
-                label={passwordLabel}
-                placeholder={passwordLabel}
-                type="password"
-                variant="outlined"
-                fullWidth
-                sx={{ mb: 3, backgroundColor: '#FFFFFF' }}
-            />
+                <TextField
+                    label={passwordLabel}
+                    placeholder={passwordLabel}
+                    type="password"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ mb: 3, backgroundColor: '#FFFFFF' }}
+                />
 
-            <DefaultButton title={buttonText} onClick={onLogin} />
-        </Box>
+                <DefaultButton title={buttonText} onClick={onLogin} />
+            </Box>
+        </div>
     );
 };
 
