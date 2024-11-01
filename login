@@ -1,13 +1,22 @@
 import React from 'react';
 import { Box, TextField, Typography } from '@mui/material';
-import DefaultButton from '../components/buttons/DefaultButton';
+import DefaultButton from './buttons/DefaultButton';
 
-const Login: React.FC = () => {
-    const handleLogin = () => {
-        // Handle login action (e.g., form submission or API call)
-        console.log('Login clicked');
-    };
+interface LoginContainerProps {
+    title: string;
+    idLabel: string;
+    passwordLabel: string;
+    buttonText: string;
+    onLogin: () => void;
+}
 
+const LoginContainer: React.FC<LoginContainerProps> = ({ 
+    title, 
+    idLabel, 
+    passwordLabel, 
+    buttonText, 
+    onLogin 
+}) => {
     return (
         <Box
             sx={{
@@ -15,35 +24,38 @@ const Login: React.FC = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                minHeight: '100vh',
+                width: '100%',
+                maxWidth: '400px',
                 backgroundColor: '#eff3f4',
                 padding: 3,
+                borderRadius: '8px',
+                boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
             }}
         >
             <Typography variant="h5" sx={{ mb: 3 }}>
-                Login
+                {title}
             </Typography>
 
             <TextField
-                label="ID"
-                placeholder="ID"
+                label={idLabel}
+                placeholder={idLabel}
                 variant="outlined"
                 fullWidth
                 sx={{ mb: 2, backgroundColor: '#FFFFFF' }}
             />
-            
+
             <TextField
-                label="パスワード"
-                placeholder="パスワード"
+                label={passwordLabel}
+                placeholder={passwordLabel}
                 type="password"
                 variant="outlined"
                 fullWidth
                 sx={{ mb: 3, backgroundColor: '#FFFFFF' }}
             />
-            
-            <DefaultButton title="Login" onClick={handleLogin} />
+
+            <DefaultButton title={buttonText} onClick={onLogin} />
         </Box>
     );
 };
 
-export default Login;
+export default LoginContainer;
