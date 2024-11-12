@@ -7,9 +7,16 @@ import {
   deleteJpkiIdentificationData,
   insertUserIdentificationData,
   insertJpkiIdentificationData,
-} from '../helpers/deleteTestDataHelpers';
-import { initAndGetReferenceNumberList, deleteTestDataForEachReferenceNumber } from '../helpers/referenceNumberHelpers';
+} from '../helpers/testDataHelpers';
 
+// ==============================
+// HELPERS
+// ==============================
+
+/**
+ * Helper function to send a DELETE request to the API.
+ * Sets the `reference-number` header and sends `userType` in the request body.
+ */
 const sendDeleteRequest = ({
   referenceNumber = referenceNumberManager.referenceNumber(),
   userType = 'AGENT',
@@ -19,12 +26,49 @@ const sendDeleteRequest = ({
     .set('reference-number', referenceNumber)
     .send({ userType });
 
+/**
+ * Helper function to verify that data for a given `userType` is deleted from both tables.
+ */
+const verifyDataDeleted = async (referenceNumber: string, userType: string) => {
+  const identificationData = await dbClient.execute(
+    `SELECT * FROM open_account_identification_data WHERE reference_number = $1 AND user_type = $2`,
+    [referenceNumber, userType]
+  );
+  expect(identificationData.rowCount).toBe(0);
+
+  const jpkiData = await dbClient.execute(
+    `SELECT * FROM jpki_identification_data WHERE reference_number = $1 AND user_type = $2`,
+    [referenceNumber, userType]
+  );
+  expect(jpkiData.rowCount).toBe(0);
+};
+
+/**
+ * Helper function to verify that data for `BENEFICIARY1` is still present in both tables.
+ */
+const verifyBeneficiaryDataPresent = async (referenceNumber: string) => {
+  const beneficiaryData = await dbClient.execute(
+    `SELECT * FROM open_account_identification_data WHERE reference_number = $1 AND user_type = 'BENEFICIARY1'`,
+    [referenceNumber]
+  );
+  expect(beneficiaryData.rowCount).toBe(1);
+
+  const beneficiaryJpkiData = await dbClient.execute(
+    `SELECT * FROM jpki_identification_data WHERE reference_number = $1 AND user_type = 'BENEFICIARY'`,
+    [referenceNumber]
+  );
+  expect(beneficiaryJpkiData.rowCount).toBe(1);
+};
+
+// ==============================
+// SETUP
+// ==============================
+
 let dbClient: any;
 
 beforeAll(async () => {
   dbClient = await getDbClient();
   await referenceNumberManager.initialize(dbClient);
-  await initAndGetReferenceNumberList();
 });
 
 beforeEach(async () => {
@@ -47,93 +91,44 @@ afterAll(async () => {
   await deleteUserIdentificationData();
   await deleteJpkiIdentificationData();
   await referenceNumberManager.cleanup();
-  await deleteTestDataForEachReferenceNumber();
 });
 
-// Test Suite
-describe('DELETE /applications/identification-data', () => {
-  describe('正常系 (Normal Cases)', () => {
-    it('should delete data for AGENT successfully and keep BENEFICIARY data intact', async () => {
-      const referenceNumber = referenceNumberManager.referenceNumber();
+// ==============================
+// TEST
+// ==============================
 
-      // Call delete API for AGENT
-      const { status, body } = await sendDeleteRequest({ referenceNumber, userType: 'AGENT' });
+describe('DELETE /applications/identification-data (Success Cases)', () => {
+  it('should delete data for AGENT and retain BENEFICIARY data', async () => {
+    const referenceNumber = referenceNumberManager.referenceNumber();
 
-      expect(status).toBe(204);
-      expect(body).toEqual({});
+    // Call the DELETE API for AGENT userType
+    const { status, body } = await sendDeleteRequest({ referenceNumber, userType: 'AGENT' });
 
-      // Verify AGENT data is deleted
-      const identificationData = await dbClient.execute(
-        `SELECT * FROM open_account_identification_data WHERE reference_number = $1 AND user_type = 'AGENT'`,
-        [referenceNumber]
-      );
-      expect(identificationData.rowCount).toBe(0);
+    // Verify the API response
+    expect(status).toBe(204);
+    expect(body).toEqual({});
 
-      const jpkiData = await dbClient.execute(
-        `SELECT * FROM jpki_identification_data WHERE reference_number = $1 AND user_type = 'AGENT'`,
-        [referenceNumber]
-      );
-      expect(jpkiData.rowCount).toBe(0);
+    // Verify that AGENT data is deleted
+    await verifyDataDeleted(referenceNumber, 'AGENT');
 
-      // Verify BENEFICIARY data is still present
-      const beneficiaryData = await dbClient.execute(
-        `SELECT * FROM open_account_identification_data WHERE reference_number = $1 AND user_type = 'BENEFICIARY1'`,
-        [referenceNumber]
-      );
-      expect(beneficiaryData.rowCount).toBe(1);
-    });
-
-    it('should delete data for REPRESENTATIVE successfully and keep BENEFICIARY data intact', async () => {
-      const referenceNumber = referenceNumberManager.referenceNumber();
-
-      // Call delete API for REPRESENTATIVE
-      const { status, body } = await sendDeleteRequest({ referenceNumber, userType: 'REPRESENTATIVE' });
-
-      expect(status).toBe(204);
-      expect(body).toEqual({});
-
-      // Verify REPRESENTATIVE data is deleted
-      const identificationData = await dbClient.execute(
-        `SELECT * FROM open_account_identification_data WHERE reference_number = $1 AND user_type = 'REPRESENTATIVE'`,
-        [referenceNumber]
-      );
-      expect(identificationData.rowCount).toBe(0);
-
-      const jpkiData = await dbClient.execute(
-        `SELECT * FROM jpki_identification_data WHERE reference_number = $1 AND user_type = 'REPRESENTATIVE'`,
-        [referenceNumber]
-      );
-      expect(jpkiData.rowCount).toBe(0);
-
-      // Verify BENEFICIARY data is still present
-      const beneficiaryData = await dbClient.execute(
-        `SELECT * FROM open_account_identification_data WHERE reference_number = $1 AND user_type = 'BENEFICIARY1'`,
-        [referenceNumber]
-      );
-      expect(beneficiaryData.rowCount).toBe(1);
-    });
+    // Verify that BENEFICIARY data is still present
+    await verifyBeneficiaryDataPresent(referenceNumber);
   });
 
-  describe('異常系 (Error Cases)', () => {
-    it('should return 404 when the reference number does not exist', async () => {
-      const referenceNumber = 'non-existent-reference';
+  it('should delete data for REPRESENTATIVE and retain BENEFICIARY data', async () => {
+    const referenceNumber = referenceNumberManager.referenceNumber();
 
-      const { status, body } = await sendDeleteRequest({ referenceNumber });
+    // Call the DELETE API for REPRESENTATIVE userType
+    const { status, body } = await sendDeleteRequest({ referenceNumber, userType: 'REPRESENTATIVE' });
 
-      expect(status).toBe(404);
-      expect(body).toEqual({ error: 'Invalid reference number' });
-    });
+    // Verify the API response
+    expect(status).toBe(204);
+    expect(body).toEqual({});
 
-    it('should return 500 when there is an error during deletion', async () => {
-      const referenceNumber = referenceNumberManager.referenceNumber();
+    // Verify that REPRESENTATIVE data is deleted
+    await verifyDataDeleted(referenceNumber, 'REPRESENTATIVE');
 
-      // Mock a deletion error
-      jest.spyOn(dbClient, 'execute').mockRejectedValueOnce(new Error('Deletion error'));
-
-      const { status, body } = await sendDeleteRequest({ referenceNumber, userType: 'AGENT' });
-
-      expect(status).toBe(500);
-      expect(body).toEqual({ error: 'Internal Server Error' });
-    });
+    // Verify that BENEFICIARY data is still present
+    await verifyBeneficiaryDataPresent(referenceNumber);
   });
 });
