@@ -1,72 +1,153 @@
-c. Repository (repositories/applicationFormRepository.ts)
-The repository handles direct interactions with the database.
+import request from 'supertest';
+import { server } from '../app';
+import { getDbClient } from '../config/dbClient';
+import { referenceNumberManager } from '../utils/referenceNumberManager';
 
-typescript
-Copy code
-import { ApplicationForm } from '../models/applicationForm';
+// Helper Functions
 
-export class ApplicationFormRepository {
-  async deleteApplicationFormById(formId: string): Promise<boolean> {
-    const result = await ApplicationForm.deleteOne({ formId });
-    return result.deletedCount > 0;
-  }
-}
-d. Use Case (useCases/deleteApplicationForm.ts)
-The use case contains the business logic.
+/**
+ * Inserts test data into the identification table.
+ */
+const insertUserIdentificationData = async (referenceNumber: string, userType: string, savedData: object) => {
+  const dbClient = await getDbClient();
+  await dbClient.execute(
+    `INSERT INTO identification (reference_number, user_type, saved_data) VALUES ($1, $2, $3)`,
+    [referenceNumber, userType, JSON.stringify(savedData)]
+  );
+};
 
-typescript
-Copy code
-import { ApplicationFormRepository } from '../repositories/applicationFormRepository';
+/**
+ * Inserts test data into the application table.
+ */
+const insertApplicationData = async (referenceNumber: string, isValid: boolean) => {
+  const dbClient = await getDbClient();
+  await dbClient.execute(
+    `INSERT INTO application (reference_number, is_valid) VALUES ($1, $2)`,
+    [referenceNumber, isValid]
+  );
+};
 
-export class DeleteApplicationForm {
-  private repository: ApplicationFormRepository;
+/**
+ * Inserts test data into the jpki_identification table.
+ */
+const insertJpkiIdentificationData = async (referenceNumber: string, userTypeNum: string, userType: string, savedData: object) => {
+  const dbClient = await getDbClient();
+  await dbClient.execute(
+    `INSERT INTO jpki_identification (reference_number, user_type_num, user_type, saved_data) VALUES ($1, $2, $3, $4)`,
+    [referenceNumber, userTypeNum, userType, JSON.stringify(savedData)]
+  );
+};
 
-  constructor(repository: ApplicationFormRepository) {
-    this.repository = repository;
-  }
+/**
+ * Deletes test data from the identification table.
+ */
+const deleteUserIdentificationData = async (referenceNumber: string) => {
+  const dbClient = await getDbClient();
+  await dbClient.execute(`DELETE FROM identification WHERE reference_number = $1`, [referenceNumber]);
+};
 
-  async execute(formId: string): Promise<boolean> {
-    return await this.repository.deleteApplicationFormById(formId);
-  }
-}
-e. Controller (controllers/applicationFormController.ts)
-The controller processes the API requests and sends responses.
+/**
+ * Deletes test data from the application table.
+ */
+const deleteApplicationData = async (referenceNumber: string) => {
+  const dbClient = await getDbClient();
+  await dbClient.execute(`DELETE FROM application WHERE reference_number = $1`, [referenceNumber]);
+};
 
-typescript
-Copy code
-import { Request, Response } from 'express';
-import { DeleteApplicationForm } from '../useCases/deleteApplicationForm';
-import { ApplicationFormRepository } from '../repositories/applicationFormRepository';
+/**
+ * Deletes test data from the jpki_identification table.
+ */
+const deleteJpkiIdentificationData = async (referenceNumber: string) => {
+  const dbClient = await getDbClient();
+  await dbClient.execute(`DELETE FROM jpki_identification WHERE reference_number = $1`, [referenceNumber]);
+};
 
-const repository = new ApplicationFormRepository();
-const deleteApplicationFormUseCase = new DeleteApplicationForm(repository);
+// Setup and Teardown
 
-export class ApplicationFormController {
-  static async deleteApplicationForm(req: Request, res: Response) {
-    try {
-      const { formId } = req.params;
-      const success = await deleteApplicationFormUseCase.execute(formId);
+let dbClient: any;
+const testReferenceNumber = '24071650001';
+const testUserType = 'REPRESENTATIVE';
+const testSavedData = { identificationStatus: 'verified' };
 
-      if (success) {
-        return res.status(200).json({ message: 'Application Form deleted successfully' });
-      } else {
-        return res.status(404).json({ message: 'Application Form not found' });
-      }
-    } catch (error) {
-      return res.status(500).json({ message: 'Internal Server Error', error });
-    }
-  }
-}
-f. Route (routes/applicationFormRoutes.ts)
-Define the API route for deletion.
+beforeAll(async () => {
+  dbClient = await getDbClient();
+  await referenceNumberManager.initialize(dbClient);
+});
 
-typescript
-Copy code
-import express from 'express';
-import { ApplicationFormController } from '../controllers/applicationFormController';
+beforeEach(async () => {
+  await insertUserIdentificationData(testReferenceNumber, testUserType, testSavedData);
+  await insertApplicationData(testReferenceNumber, true);
+  await insertJpkiIdentificationData(testReferenceNumber, '1', testUserType, testSavedData);
+});
 
-const router = express.Router();
+afterEach(async () => {
+  await deleteUserIdentificationData(testReferenceNumber);
+  await deleteApplicationData(testReferenceNumber);
+  await deleteJpkiIdentificationData(testReferenceNumber);
+});
 
-router.delete('/application-form/:formId', ApplicationFormController.deleteApplicationForm);
+afterAll(async () => {
+  await referenceNumberManager.cleanup();
+  await dbClient.close();
+});
 
-export default router;
+// Helper Function for Sending Requests
+
+const sendDeleteRequest = (referenceNumber: string = testReferenceNumber, userType: string = testUserType) =>
+  request(server)
+    .delete(`/applications/identification-data`)
+    .set('user-uid', referenceNumberManager.userUid())
+    .send({ referenceNumber, userType });
+
+// Test Suite
+
+describe('DELETE /applications/identification-data', () => {
+  describe('Normal Cases', () => {
+    it('returns 204 when identification data for REPRESENTATIVE is deleted successfully', async () => {
+      const response = await sendDeleteRequest();
+
+      expect(response.status).toBe(204);
+      expect(response.body).toEqual({});
+
+      // Verify the data has been deleted from the identification table
+      const result = await dbClient.execute(`SELECT * FROM identification WHERE reference_number = $1`, [
+        testReferenceNumber,
+      ]);
+      expect(result.rowCount).toBe(0);
+    });
+  });
+
+  describe('Error Cases', () => {
+    it('returns 404 when the reference number does not exist', async () => {
+      const response = await sendDeleteRequest('non-existent-reference');
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Invalid reference number');
+    });
+
+    it('returns 500 when deletion from IdentificationAftConnectionData fails', async () => {
+      // Manually insert invalid data to simulate a failure
+      await dbClient.execute(`INSERT INTO identification (reference_number, user_type, saved_data) VALUES ($1, $2, NULL)`, [
+        testReferenceNumber,
+        'INVALID',
+      ]);
+
+      const response = await sendDeleteRequest();
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal Server Error');
+    });
+
+    it('returns 500 when update operation in OpenAccountApplicationRepository fails', async () => {
+      // Corrupt the application data to trigger a failure
+      await dbClient.execute(`UPDATE application SET is_valid = NULL WHERE reference_number = $1`, [
+        testReferenceNumber,
+      ]);
+
+      const response = await sendDeleteRequest();
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal Server Error');
+    });
+  });
+});
