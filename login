@@ -1,5 +1,26 @@
+1. EventTag Component
+A reusable component for rendering event tags.
+
+components/EventTag.tsx
 import React from 'react';
-import { Box, Typography, Button, Chip } from '@mui/material';
+import { Chip } from '@mui/material';
+
+interface EventTagProps {
+    label: string;
+}
+
+const EventTag = ({ label }: EventTagProps) => {
+    return <Chip label={label} sx={{ fontSize: '0.875rem', color: '#4a4a4a' }} />;
+};
+
+export default EventTag;
+2. EventDetails Component
+Displays the main details of the event, including image, title, tags, date, location, and overview.
+
+components/EventDetails.tsx
+import React from 'react';
+import { Box, Typography, Button } from '@mui/material';
+import EventTag from './EventTag';
 
 interface EventDetailsProps {
     imageSrc: string;
@@ -11,109 +32,106 @@ interface EventDetailsProps {
     onJoinClick: () => void;
 }
 
-const EventDetails = ({ imageSrc, title, date, location, overview, tags, onJoinClick }: EventDetailsProps) => {
+const EventDetails = ({
+    imageSrc,
+    title,
+    date,
+    location,
+    overview,
+    tags,
+    onJoinClick,
+}: EventDetailsProps) => {
     return (
-        <Box
-            sx={{
-                padding: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                backgroundColor: '#eff3f4',
-                minHeight: '100vh',
-            }}
-        >
+        <Box sx={{ padding: 2, backgroundColor: '#eff3f4', minHeight: '100vh' }}>
             <img
                 src={imageSrc}
                 alt={title}
-                style={{ width: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'cover', marginBottom: '16px' }}
+                style={{ width: '100%', height: '200px', borderRadius: '8px', objectFit: 'cover', marginBottom: '16px' }}
             />
-            <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '8px' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
                 {title}
             </Typography>
-
-            <Box sx={{ display: 'flex', gap: 1, marginBottom: '16px' }}>
+            <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
                 {tags.map((tag, index) => (
-                    <Chip key={index} label={tag} />
+                    <EventTag key={index} label={tag} />
                 ))}
             </Box>
-
             <Button
                 variant="contained"
                 color="primary"
                 fullWidth
                 sx={{
-                    height: '52px',
-                    borderRadius: '26px',
+                    height: '48px',
+                    borderRadius: '24px',
                     backgroundColor: '#429AD0',
-                    color: '#FFFFFF',
                     fontWeight: 'bold',
-                    marginBottom: '16px',
+                    mb: 3,
+                    '&:hover': { backgroundColor: '#357CA5' },
                 }}
                 onClick={onJoinClick}
             >
                 参加する
             </Button>
-
-            <Typography variant="subtitle1" sx={{ marginBottom: '8px' }}>
-                日時
-            </Typography>
-            <Typography variant="body2" sx={{ marginBottom: '16px' }}>
-                {date}
-            </Typography>
-
-            <Typography variant="subtitle1" sx={{ marginBottom: '8px' }}>
-                場所
-            </Typography>
-            <Typography variant="body2" sx={{ marginBottom: '16px' }}>
-                {location}
-            </Typography>
-
-            <Typography variant="subtitle1" sx={{ marginBottom: '8px' }}>
-                イベント概要
-            </Typography>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>日時</Typography>
+            <Typography variant="body2" sx={{ mb: 2 }}>{date}</Typography>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>場所</Typography>
+            <Typography variant="body2" sx={{ mb: 2 }}>{location}</Typography>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>イベント概要</Typography>
             <Typography variant="body2">{overview}</Typography>
         </Box>
     );
 };
 
 export default EventDetails;
-2. JoinEventModal Component
-This modal component will pop up when the user clicks the 参加する (Join) button.
+3. JoinEventModal Component
+Handles the modal pop-up for the user input form when joining an event.
 
-JoinEventModal.tsx
-import React from 'react';
+components/JoinEventModal.tsx
+import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, TextField, Button, Box } from '@mui/material';
 
 interface JoinEventModalProps {
     open: boolean;
     onClose: () => void;
+    onJoin: (data: { name: string; department: string }) => void;
 }
 
-const JoinEventModal = ({ open, onClose }: JoinEventModalProps) => {
+const JoinEventModal = ({ open, onClose, onJoin }: JoinEventModalProps) => {
+    const [name, setName] = useState('');
+    const [department, setDepartment] = useState('');
+
+    const handleJoinClick = () => {
+        if (name.trim() === '' || department.trim() === '') {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        onJoin({ name, department });
+        onClose();
+    };
+
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogTitle>イベント参加</DialogTitle>
             <DialogContent>
-                <Typography variant="body2" sx={{ marginBottom: '16px' }}>
-                    「サッカーの練習 & 試合」のイベントに参加しますか？参加する場合、管理者に通知が届きます。
-                </Typography>
-
                 <TextField
                     label="名前"
                     placeholder="名前"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     fullWidth
-                    sx={{ marginBottom: '16px' }}
+                    sx={{ mb: 2 }}
                 />
                 <TextField
                     label="所属部署"
                     placeholder="所属部署"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
                     fullWidth
-                    sx={{ marginBottom: '16px' }}
+                    sx={{ mb: 3 }}
                 />
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
-                    <Button variant="contained" color="primary" onClick={onClose}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Button variant="contained" color="primary" onClick={handleJoinClick}>
                         参加
                     </Button>
                     <Button variant="outlined" color="secondary" onClick={onClose}>
@@ -126,10 +144,10 @@ const JoinEventModal = ({ open, onClose }: JoinEventModalProps) => {
 };
 
 export default JoinEventModal;
-3. EventDetailsScreen
-This is the main screen that brings everything together, including the EventDetails and JoinEventModal components.
+4. EventDetailsScreen
+The main screen that integrates the EventDetails and JoinEventModal components.
 
-EventDetailsScreen.tsx
+pages/EventDetailsScreen.tsx
 import React, { useState } from 'react';
 import EventDetails from '../components/EventDetails';
 import JoinEventModal from '../components/JoinEventModal';
@@ -142,7 +160,7 @@ const EventDetailsScreen = () => {
         title: 'サッカーの練習 & 試合',
         date: '2024/11/22',
         location: '大田区総合体育館',
-        overview: '体育館でサッカーの簡単な練習と試合を行います。見学だけでも構わないのでぜひ興味のある方はご参加ください。',
+        overview: '体育館でサッカーの簡単な練習と試合を行います。興味がある方はぜひご参加ください。',
         tags: ['サッカー', '20代', '30代'],
     };
 
@@ -154,22 +172,17 @@ const EventDetailsScreen = () => {
         setModalOpen(false);
     };
 
+    const handleJoinEvent = (data: { name: string; department: string }) => {
+        console.log('User joined the event:', data);
+    };
+
     return (
         <>
-            <EventDetails
-                imageSrc={event.imageSrc}
-                title={event.title}
-                date={event.date}
-                location={event.location}
-                overview={event.overview}
-                tags={event.tags}
-                onJoinClick={handleJoinClick}
-            />
-            <JoinEventModal open={isModalOpen} onClose={handleCloseModal} />
+            <EventDetails {...event} onJoinClick={handleJoinClick} />
+            <JoinEventModal open={isModalOpen} onClose={handleCloseModal} onJoin={handleJoinEvent} />
         </>
     );
 };
 
 export default EventDetailsScreen;
-Explanation
-EventDetails Component: Displays the main information of the event, including the image, title, tags, date, location, and overview. It also includes a button to join the event.
+Summary of Changes
