@@ -1,18 +1,21 @@
-const results = await Promise.allSettled([
-  this.#identificationAftConnectionDataRepository.deleteIdentificationAftConnectionData(referenceNumber, 'AGENT'),
-  this.#identificationAftConnectionDataRepository.deleteIdentificationAftConnectionData(referenceNumber, 'REPRESENTATIVE'),
-  this.#identificationDataRepository.deleteIdentificationData(referenceNumber, 'AGENT'),
-  this.#identificationDataRepository.deleteIdentificationData(referenceNumber, 'REPRESENTATIVE'),
-  this.#applicationRepository.saveValidationStatus({
-    referenceNumber,
-    key: 'isIdentificationApplicationDataValid',
-    isValid: false,
-  }),
-]);
+async deleteApplicantIdentificationData(): Promise<void> {
+  // Fetch the reference number for the user
+  const referenceNumber = await this.#referenceNumberRepository.getReferenceNumber(this.#userUid);
 
-// Handle results
-results.forEach((result, index) => {
-  if (result.status === 'rejected') {
-    console.error(`Operation ${index} failed with error:`, result.reason);
+  if (!referenceNumber) {
+    throw new NotFoundError({ errorDetail: 'User has no application reference number' });
   }
-});
+
+  // Execute all deletion operations concurrently
+  await Promise.all([
+    this.#identificationAftConnectionDataRepository.deleteIdentificationAftConnectionData(referenceNumber, 'AGENT'),
+    this.#identificationAftConnectionDataRepository.deleteIdentificationAftConnectionData(referenceNumber, 'REPRESENTATIVE'),
+    this.#identificationDataRepository.deleteIdentificationData(referenceNumber, 'AGENT'),
+    this.#identificationDataRepository.deleteIdentificationData(referenceNumber, 'REPRESENTATIVE'),
+    this.#applicationRepository.saveValidationStatus({
+      referenceNumber,
+      key: 'isIdentificationApplicationDataValid',
+      isValid: false,
+    }),
+  ]);
+}
