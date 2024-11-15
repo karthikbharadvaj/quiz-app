@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { Box, Divider } from '@mui/material';
-import EventContainer from '../../components/EventContainer';
 import Header from '../../components/Header';
 import MenuContainer from '../../components/MenuContainer';
 import ActionContainer from '../../components/ActionContainer';
 import SnackBar from '../../components/SnackBar';
-import EventDetailsScreen from './EventDetailsScreen';
-import JoinEventModal from '../../components/JoinEventModal';
+import EventDetailContainer from '../../components/EventDetailContainer';
+import JoinEventContainer from '../../components/JoinEventContainer';
 import { useNavigate } from 'react-router-dom';
 
-export const CircleInfo = () => {
+const CircleInfo = () => {
     const [isMember, setIsMember] = useState(false);
     const [isJoined, setIsJoined] = useState(false);
     const [isToastOpen, setIsToastOpen] = useState(false);
@@ -18,29 +17,30 @@ export const CircleInfo = () => {
 
     const navigate = useNavigate();
 
-    // Handler for Join Button Click
+    // Event data
+    const event = {
+        imageSrc: '/images/soccer.jpg',
+        title: 'サッカーの練習 & 試合',
+        date: '2024/11/22',
+        location: '大田区総合体育館',
+        overview: '体育館でサッカーの簡単な練習と試合を行います。見学だけでも構いませんので、興味のある方はぜひご参加ください。',
+        tags: ['サッカー', '20代', '30代'],
+    };
+
     const onClickJoin = () => {
         setIsModalOpen(true);
     };
 
-    // Handler for Confirming Join in Modal
-    const onConfirmJoin = () => {
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleConfirmJoin = () => {
         setIsToastOpen(true);
         setIsJoined(true);
         setToastMessage('参加表明しました。');
         setIsModalOpen(false);
     };
-
-    // Close the modal
-    const onCloseModal = () => {
-        setIsModalOpen(false);
-    };
-
-    // Navigation Handlers
-    const onClickHomeBtn = () => navigate('/Home');
-    const onClickMyPageBtn = () => navigate('/MyPage');
-    const onClickCircleMemberList = () => navigate('/CircleMemberList');
-    const onClickCircleListBtn = () => navigate('/CircleList');
 
     return (
         <div className="Onboarding">
@@ -48,80 +48,56 @@ export const CircleInfo = () => {
                 <Header>サークルページ</Header>
                 <Box sx={{ mt: 2 }} />
 
-                {/* Display EventDetailsScreen if user is a member, otherwise show placeholder */}
+                {/* If user is a member, show event details */}
                 {isMember ? (
-                    <EventDetailsScreen onJoinClick={onClickJoin} />
+                    <EventDetailContainer
+                        imageSrc={event.imageSrc}
+                        title={event.title}
+                        date={event.date}
+                        location={event.location}
+                        overview={event.overview}
+                        tags={event.tags}
+                        onJoinClick={onClickJoin}
+                    />
                 ) : (
                     <Box sx={{ textAlign: 'center', mt: 4 }}>
-                        <p>サークルに参加していません。</p>
+                        <Typography variant="body1">サークルに参加していません。</Typography>
                     </Box>
                 )}
 
                 <Divider sx={{ my: 2 }} />
 
-                {/* Action Section */}
                 <ActionContainer
                     title="アクション"
                     contents={
                         isMember
                             ? [
-                                  {
-                                      title: '編集',
-                                      onClick: onClickCircleMemberList,
-                                  },
-                                  {
-                                      title: 'メンバー一覧',
-                                      onClick: onClickCircleMemberList,
-                                  },
-                                  {
-                                      title: '承認待ちユーザー',
-                                      onClick: onClickCircleMemberList,
-                                  },
-                                  {
-                                      title: '戻る',
-                                      onClick: onClickCircleListBtn,
-                                  },
+                                  { title: '編集', onClick: () => navigate('/CircleMemberList') },
+                                  { title: 'メンバー一覧', onClick: () => navigate('/CircleMemberList') },
+                                  { title: '戻る', onClick: () => navigate('/CircleList') },
                               ]
                             : [
-                                  {
-                                      title: '参加表明',
-                                      onClick: onClickJoin,
-                                      disabled: isJoined,
-                                  },
-                                  {
-                                      title: 'メンバー一覧',
-                                      onClick: onClickCircleMemberList,
-                                  },
-                                  {
-                                      title: '戻る',
-                                      onClick: onClickCircleListBtn,
-                                  },
+                                  { title: '参加表明', onClick: onClickJoin, disabled: isJoined },
+                                  { title: '戻る', onClick: () => navigate('/CircleList') },
                               ]
                     }
                 />
 
-                {/* Menu Section */}
                 <MenuContainer
-                    contents={[
-                        {
-                            title: 'マイページ',
-                            onClick: onClickMyPageBtn,
-                        },
-                    ]}
+                    contents={[{ title: 'マイページ', onClick: () => navigate('/MyPage') }]}
                 />
 
-                {/* SnackBar Notification */}
                 <SnackBar
                     open={isToastOpen}
                     message={toastMessage}
                     onClose={() => setIsToastOpen(false)}
                 />
 
-                {/* Join Event Modal */}
-                <JoinEventModal
+                <JoinEventContainer
                     open={isModalOpen}
-                    onClose={onCloseModal}
-                    onConfirm={onConfirmJoin}
+                    onClose={handleCloseModal}
+                    onConfirmJoin={handleConfirmJoin}
+                    eventTitle={event.title}
                 />
             </header>
         </div>
@@ -129,53 +105,3 @@ export const CircleInfo = () => {
 };
 
 export default CircleInfo;
-New JoinEventModal.tsx Component
-This is the modal that pops up when the user clicks the 参加する (Join) button.
-
-typescript
-Copy code
-import React from 'react';
-import { Dialog, DialogTitle, DialogContent, TextField, Button, Box, Typography } from '@mui/material';
-
-interface JoinEventModalProps {
-    open: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-}
-
-const JoinEventModal = ({ open, onClose, onConfirm }: JoinEventModalProps) => {
-    return (
-        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-            <DialogTitle>イベント参加</DialogTitle>
-            <DialogContent>
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                    「サッカーの練習 & 試合」のイベントに参加しますか？参加する場合、管理者に通知が届きます。
-                </Typography>
-
-                <TextField
-                    label="名前"
-                    placeholder="名前を入力してください"
-                    fullWidth
-                    sx={{ mb: 2 }}
-                />
-                <TextField
-                    label="所属部署"
-                    placeholder="所属部署を入力してください"
-                    fullWidth
-                    sx={{ mb: 3 }}
-                />
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                    <Button variant="contained" color="primary" onClick={onConfirm}>
-                        参加
-                    </Button>
-                    <Button variant="outlined" color="secondary" onClick={onClose}>
-                        キャンセル
-                    </Button>
-                </Box>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
-export default JoinEventModal;
