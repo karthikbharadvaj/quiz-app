@@ -1,14 +1,11 @@
-EventDetails Component
-We will integrate TagAdd into the EventDetails component, allowing users to add tags for the event.
-
-EventDetails.tsx
+1. Updated EventDetailContainer.tsx
 typescript
 Copy code
 import React, { useState } from 'react';
 import { Box, Typography, Button, Chip } from '@mui/material';
 import TagAdd from './TagAdd';
 
-interface EventDetailsProps {
+interface EventDetailContainerProps {
     imageSrc: string;
     title: string;
     date: string;
@@ -18,7 +15,7 @@ interface EventDetailsProps {
     onJoinClick: () => void;
 }
 
-const EventDetails = ({
+const EventDetailContainer = ({
     imageSrc,
     title,
     date,
@@ -26,12 +23,11 @@ const EventDetails = ({
     overview,
     tags,
     onJoinClick,
-}: EventDetailsProps) => {
+}: EventDetailContainerProps) => {
     const [eventTags, setEventTags] = useState<string[]>(tags);
 
     const handleTagUpdate = (updatedTags: string[]) => {
         setEventTags(updatedTags);
-        console.log('Updated Tags:', updatedTags);
     };
 
     return (
@@ -94,11 +90,8 @@ const EventDetails = ({
             <Typography variant="subtitle1" sx={{ marginBottom: '8px' }}>
                 イベント概要
             </Typography>
-            <Typography variant="body2" sx={{ marginBottom: '16px' }}>
-                {overview}
-            </Typography>
+            <Typography variant="body2">{overview}</Typography>
 
-            {/* Integrate TagAdd Component */}
             <TagAdd
                 title="タグを追加"
                 name="eventTags"
@@ -110,18 +103,62 @@ const EventDetails = ({
     );
 };
 
-export default EventDetails;
-3. EventDetailsScreen Component
-This screen will include the EventDetails component and handle the state for the modal pop-up when the user clicks the 参加する (Join) button.
+export default EventDetailContainer;
+2. Updated JoinEventContainer.tsx
+typescript
+Copy code
+import React from 'react';
+import { Dialog, DialogTitle, DialogContent, TextField, Button, Box } from '@mui/material';
 
-EventDetailsScreen.tsx
+interface JoinEventContainerProps {
+    open: boolean;
+    onClose: () => void;
+}
+
+const JoinEventContainer = ({ open, onClose }: JoinEventContainerProps) => {
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+            <DialogTitle>イベント参加</DialogTitle>
+            <DialogContent>
+                <Typography variant="body2" sx={{ marginBottom: '16px' }}>
+                    「サッカーの練習 & 試合」のイベントに参加しますか？参加する場合、管理者に通知が届きます。
+                </Typography>
+
+                <TextField
+                    label="名前"
+                    placeholder="名前"
+                    fullWidth
+                    sx={{ marginBottom: '16px' }}
+                />
+                <TextField
+                    label="所属部署"
+                    placeholder="所属部署"
+                    fullWidth
+                    sx={{ marginBottom: '16px' }}
+                />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
+                    <Button variant="contained" color="primary" onClick={onClose}>
+                        参加
+                    </Button>
+                    <Button variant="outlined" color="secondary" onClick={onClose}>
+                        キャンセル
+                    </Button>
+                </Box>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+export default JoinEventContainer;
+3. Updated EventDetailScreen.tsx
 typescript
 Copy code
 import React, { useState } from 'react';
-import EventDetails from '../components/EventDetails';
-import JoinEventModal from '../components/JoinEventModal';
+import EventDetailContainer from '../components/EventDetailContainer';
+import JoinEventContainer from '../components/JoinEventContainer';
 
-const EventDetailsScreen = () => {
+const EventDetailScreen = () => {
     const [isModalOpen, setModalOpen] = useState(false);
 
     const event = {
@@ -143,7 +180,7 @@ const EventDetailsScreen = () => {
 
     return (
         <>
-            <EventDetails
+            <EventDetailContainer
                 imageSrc={event.imageSrc}
                 title={event.title}
                 date={event.date}
@@ -152,10 +189,10 @@ const EventDetailsScreen = () => {
                 tags={event.tags}
                 onJoinClick={handleJoinClick}
             />
-            <JoinEventModal open={isModalOpen} onClose={handleCloseModal} />
+            <JoinEventContainer open={isModalOpen} onClose={handleCloseModal} />
         </>
     );
 };
 
-export default EventDetailsScreen;
-Explanation
+export default EventDetailScreen;
+Summary
