@@ -5,29 +5,42 @@ import Header from '../../components/Header';
 import MenuContainer from '../../components/MenuContainer';
 import ActionContainer from '../../components/ActionContainer';
 import SnackBar from '../../components/SnackBar';
-import { useNavigate } from 'react-router-dom';
 import EventDetailsScreen from './EventDetailsScreen';
+import JoinEventModal from '../../components/JoinEventModal';
+import { useNavigate } from 'react-router-dom';
 
 export const CircleInfo = () => {
     const [isMember, setIsMember] = useState(false);
     const [isJoined, setIsJoined] = useState(false);
     const [isToastOpen, setIsToastOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const navigate = useNavigate();
 
-    // Function handlers for navigation
+    // Handler for Join Button Click
+    const onClickJoin = () => {
+        setIsModalOpen(true);
+    };
+
+    // Handler for Confirming Join in Modal
+    const onConfirmJoin = () => {
+        setIsToastOpen(true);
+        setIsJoined(true);
+        setToastMessage('参加表明しました。');
+        setIsModalOpen(false);
+    };
+
+    // Close the modal
+    const onCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    // Navigation Handlers
     const onClickHomeBtn = () => navigate('/Home');
     const onClickMyPageBtn = () => navigate('/MyPage');
     const onClickCircleMemberList = () => navigate('/CircleMemberList');
     const onClickCircleListBtn = () => navigate('/CircleList');
-
-    // Handler for Join Button
-    const onClickJoin = () => {
-        setIsToastOpen(true);
-        setIsJoined(true);
-        setToastMessage('参加表明しました。');
-    };
 
     return (
         <div className="Onboarding">
@@ -35,9 +48,9 @@ export const CircleInfo = () => {
                 <Header>サークルページ</Header>
                 <Box sx={{ mt: 2 }} />
 
-                {/* If user is a member, show EventDetailsScreen, else show a placeholder */}
+                {/* Display EventDetailsScreen if user is a member, otherwise show placeholder */}
                 {isMember ? (
-                    <EventDetailsScreen />
+                    <EventDetailsScreen onJoinClick={onClickJoin} />
                 ) : (
                     <Box sx={{ textAlign: 'center', mt: 4 }}>
                         <p>サークルに参加していません。</p>
@@ -103,9 +116,66 @@ export const CircleInfo = () => {
                     message={toastMessage}
                     onClose={() => setIsToastOpen(false)}
                 />
+
+                {/* Join Event Modal */}
+                <JoinEventModal
+                    open={isModalOpen}
+                    onClose={onCloseModal}
+                    onConfirm={onConfirmJoin}
+                />
             </header>
         </div>
     );
 };
 
 export default CircleInfo;
+New JoinEventModal.tsx Component
+This is the modal that pops up when the user clicks the 参加する (Join) button.
+
+typescript
+Copy code
+import React from 'react';
+import { Dialog, DialogTitle, DialogContent, TextField, Button, Box, Typography } from '@mui/material';
+
+interface JoinEventModalProps {
+    open: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+}
+
+const JoinEventModal = ({ open, onClose, onConfirm }: JoinEventModalProps) => {
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+            <DialogTitle>イベント参加</DialogTitle>
+            <DialogContent>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                    「サッカーの練習 & 試合」のイベントに参加しますか？参加する場合、管理者に通知が届きます。
+                </Typography>
+
+                <TextField
+                    label="名前"
+                    placeholder="名前を入力してください"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                />
+                <TextField
+                    label="所属部署"
+                    placeholder="所属部署を入力してください"
+                    fullWidth
+                    sx={{ mb: 3 }}
+                />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                    <Button variant="contained" color="primary" onClick={onConfirm}>
+                        参加
+                    </Button>
+                    <Button variant="outlined" color="secondary" onClick={onClose}>
+                        キャンセル
+                    </Button>
+                </Box>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+export default JoinEventModal;
