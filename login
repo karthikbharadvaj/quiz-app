@@ -1,71 +1,76 @@
-Step 1: Modify onFetchEventParticipants Function
-Ensure your handler fetches and updates the participant list correctly.
+Step 1: Define the Interface
+Define the interface for the props of ParticipantsBox.
 
 typescript
 Copy code
-const onFetchEventParticipants = async () => {
-    try {
-        const { data } = await fetchEventParticipants(id ?? '1');
-        // Extract names from the fetched participant data
-        const participantNames = data
-            .filter((info) => info !== null)
-            .map(({ name }) => name);
-
-        setParticipantNameList(participantNames);
-    } catch (err: any) {
-        console.error('Update error', err);
-    }
-};
-Step 2: Create the Participant List Component
-Create a new component to display the participants.
+interface ParticipantsBoxProps {
+    participants: string[];
+}
+Step 2: Create the ParticipantsBox Component
+Below is the implementation of ParticipantsBox, following a similar structure to your ContentsBox component.
 
 tsx
 Copy code
-// src/components/ParticipantsList.tsx
 import React from "react";
-import { Box, Typography, Avatar } from "@mui/material";
+import { Box, Typography, Avatar, Divider } from "@mui/material";
 
-interface ParticipantsListProps {
-    participantNames: string[];
-}
-
-const ParticipantsList: React.FC<ParticipantsListProps> = ({ participantNames }) => {
+const ParticipantsBox: React.FC<ParticipantsBoxProps> = ({ participants }) => {
     return (
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", marginTop: 2 }}>
-            {participantNames.map((name, index) => (
-                <Box key={index} sx={{ textAlign: "center" }}>
-                    <Avatar sx={{ width: 40, height: 40 }}>
-                        {name.charAt(0).toUpperCase()}
-                    </Avatar>
-                    <Typography variant="body2">{name}</Typography>
-                </Box>
-            ))}
+        <Box sx={{ width: "100%", flexDirection: "column", display: "flex" }}>
+            {participants.length > 0 ? (
+                participants.map((name, index) => (
+                    <Box key={index} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                        <Avatar sx={{ width: 40, height: 40, bgcolor: "#3f51b5", mr: 2 }}>
+                            {name.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <Typography
+                            sx={{ fontWeight: 700, wordWrap: "break-word", color: "#454545" }}
+                        >
+                            {name}
+                        </Typography>
+                    </Box>
+                ))
+            ) : (
+                <Typography sx={{ color: "#454545" }}>参加者がいません</Typography>
+            )}
+            <Divider sx={{ my: 2 }} />
         </Box>
     );
 };
 
-export default ParticipantsList;
-Step 3: Integrate the Component in Your Main Page
-Import and use this component in your main page (where onFetchEventParticipants is used).
+export default ParticipantsBox;
+Explanation
+Layout:
+
+The Box component is used to structure the layout in a column, similar to ContentsBox.
+Avatar is used to display the first letter of the participant's name, adding a visual representation.
+Mapping Through Participants:
+
+The participants.map() function iterates through the list of participant names.
+Each participant's name is displayed with an Avatar and Typography element.
+Fallback Message:
+
+If the participants list is empty, it shows "参加者がいません".
+Styling:
+
+The styles match your current approach, using sx for inline styling and colors consistent with your design.
+Step 3: Using ParticipantsBox in Your Main Component
+Import and use ParticipantsBox in your main component:
 
 tsx
 Copy code
-import React, { useEffect, useState } from "react";
-import { ParticipantsList } from "./components/ParticipantsList";
+import ParticipantsBox from "./components/ParticipantsBox";
 
-const EventInfoPage: React.FC = () => {
-    const [participantNameList, setParticipantNameList] = useState<string[]>([]);
+<Box sx={{ mt: 3 }}>
+    <Typography variant="h6">参加者リスト</Typography>
+    <ParticipantsBox participants={participantNameList} />
+</Box>
+Step 4: Ensure participantNameList is Set Correctly
+Make sure your participantNameList state is updated correctly via your custom hook:
 
-    useEffect(() => {
-        onFetchEventParticipants();
-    }, []);
-
-    return (
-        <div>
-            <h2>Event Participants</h2>
-            <ParticipantsList participantNames={participantNameList} />
-        </div>
-    );
-};
-
-export default EventInfoPage;
+typescript
+Copy code
+useEffect(() => {
+    onFetchEventParticipants();
+}, []);
+Final Notes
