@@ -1,19 +1,55 @@
-2. Custom Hook (useEventInfo)
-This hook handles fetching participants and other event-related data.
+
+Step 1: Pass id to the Custom Hook
+In the component where you use useEventInfo, ensure the id is passed as an argument. You can get the id from the route parameters using useParams from react-router-dom.
 
 tsx
 Copy code
-import { useState } from "react";
-import { fetchEventParticipants } from "../services/eventService";
+import { useParams } from "react-router-dom";
+import { useEventInfo } from "../hooks/useEventInfo";
+
+const EventInfo = () => {
+  const { id } = useParams<{ id: string }>(); // Extract the ID from the route
+
+  const {
+    title,
+    tags,
+    contents,
+    participantNameList,
+    onFetchEventInfo,
+    onFetchEventParticipants,
+  } = useEventInfo(id ?? "1"); // Pass the ID to the hook
+
+  useEffect(() => {
+    onFetchEventInfo();
+    onFetchEventParticipants();
+  }, [onFetchEventInfo, onFetchEventParticipants]);
+
+  return (
+    <div>
+      {/* Your component UI */}
+    </div>
+  );
+};
+
+export default EventInfo;
+Step 2: Update the Custom Hook
+Ensure the useEventInfo hook is designed to accept the id parameter:
+
+tsx
+Copy code
+import { useState, useEffect } from "react";
+import { fetchEventParticipants } from "../services/fetchEventParticipants";
 
 export const useEventInfo = (id: string) => {
-  const [participantNameList, setParticipantNameList] = useState<{ name: string; department: string }[]>([]);
+  const [participantNameList, setParticipantNameList] = useState<
+    { name: string; department: string }[]
+  >([]);
 
   const onFetchEventParticipants = async () => {
     try {
-      const participants = await fetchEventParticipants(id);
-      setParticipantNameList(participants);
-    } catch (err: any) {
+      const data = await fetchEventParticipants(id);
+      setParticipantNameList(data); // Set the fetched data
+    } catch (err) {
       console.error("Error fetching participants:", err);
     }
   };
@@ -23,153 +59,84 @@ export const useEventInfo = (id: string) => {
     onFetchEventParticipants,
   };
 };
-3. ParticipantsBox Component
-This displays participant avatars, names, and departments with a forward arrow for navigation.
+Step 3: Ensure the Route Includes id
+Make sure your EventInfo route in App.tsx or Routes.tsx includes the id parameter:
 
 tsx
 Copy code
-import React from "react";
-import { Box, Avatar, Typography, IconButton } from "@mui/material";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { useNavigate } from "react-router-dom";
+<Routes>
+  <Route path="/EventInfo/:id" element={<EventInfo />} />
+</Routes>
+Why This Works
+useParams Extracts the Route Parameter:
 
-interface ParticipantsBoxProps {
-  participants: { name: string; department: string }[];
-  onNavigate: () => void; // Navigation callback for the forward arrow
-}
+useParams is used to fetch the id from the route, which is then passed to the useEventInfo hook.
+Custom Hook Requires the id:
 
-const ParticipantsBox: React.FC<ParticipantsBoxProps> = ({ participants, onNavigate }) => {
-  return (
-    <Box sx={{ width: "100%", flexDirection: "column", display: "flex" }}>
-      <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
-        メンバー
-      </Typography>
+The hook fetches the participant data for the specific id.
+Avoid Missing Arguments:
 
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          {participants.slice(0, 5).map(({ name, department }, index) => (
-            <Box
-              key={index}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <Avatar
-                sx={{
-                  width: 32,
-                  height: 32,
-                  bgcolor: "#73C6C8",
-                  color: "#fff",
-                  fontSize: "14px",
-                }}
-              >
-                {name.charAt(0).toUpperCase()}
-              </Avatar>
-              <Box>
-                <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                  {name}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#6e6e6e" }}>
-                  {department}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
-        <IconButton onClick={onNavigate}>
-          <ArrowForwardIosIcon />
-        </IconButton>
-      </Box>
-    </Box>
-  );
-};
+By ensuring id is always passed, you avoid the Expected 1 arguments, but got 0 error.
+Final Code
+Here’s the corrected setup:
 
-export default ParticipantsBox;
-4. ParticipantListScreen Component
-This displays the full list of participants.
-
+EventInfo Component:
 tsx
 Copy code
-import React, { useEffect } from "react";
-import { Box, Avatar, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
+import { useEffect } from "react";
 import { useEventInfo } from "../hooks/useEventInfo";
 
-const ParticipantListScreen: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const { participantNameList, onFetchEventParticipants } = useEventInfo(id ?? "");
+const EventInfo = () => {
+  const { id } = useParams<{ id: string }>(); // Extract ID from route
+
+  const {
+    participantNameList,
+    onFetchEventParticipants,
+  } = useEventInfo(id ?? "1"); // Pass ID to hook
 
   useEffect(() => {
-    onFetchEventParticipants();
+    onFetchEventParticipants(); // Fetch participants on mount
   }, [onFetchEventParticipants]);
 
   return (
-    <Box sx={{ padding: 2 }}>
-      <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-        参加メンバー
-      </Typography>
-      {participantNameList.map(({ name, department }, index) => (
-        <Box
-          key={index}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 40,
-              height: 40,
-              bgcolor: "#3f51b5",
-              color: "#fff",
-            }}
-          >
-            {name.charAt(0).toUpperCase()}
-          </Avatar>
-          <Box>
-            <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-              {name}
-            </Typography>
-            <Typography variant="body2" sx={{ color: "#6e6e6e" }}>
-              {department}
-            </Typography>
-          </Box>
-        </Box>
-      ))}
-    </Box>
+    <div>
+      <h1>Event Participants</h1>
+      {/* Render participantNameList */}
+    </div>
   );
 };
 
-export default ParticipantListScreen;
-5. Router Setup
-Update the routes in your App.tsx or equivalent file to include both the ParticipantsBox and ParticipantListScreen.
-
+export default EventInfo;
+Custom Hook:
 tsx
 Copy code
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ParticipantsBox from "./components/ParticipantsBox";
-import ParticipantListScreen from "./components/ParticipantListScreen";
+import { useState } from "react";
+import { fetchEventParticipants } from "../services/fetchEventParticipants";
 
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/EventInfo/:id" element={<ParticipantsBox participants={[]} onNavigate={() => {}} />} />
-        <Route path="/EventInfo/:id/participants" element={<ParticipantListScreen />} />
-      </Routes>
-    </Router>
-  );
-}
+export const useEventInfo = (id: string) => {
+  const [participantNameList, setParticipantNameList] = useState<
+    { name: string; department: string }[]
+  >([]);
 
-export default App;
-Summary of Features
+  const onFetchEventParticipants = async () => {
+    try {
+      const data = await fetchEventParticipants(id);
+      setParticipantNameList(data);
+    } catch (err) {
+      console.error("Error fetching participants:", err);
+    }
+  };
+
+  return {
+    participantNameList,
+    onFetchEventParticipants,
+  };
+};
+Let me know if you encounter further issues!
+
+
+
+
+
+
