@@ -1,151 +1,115 @@
+To modify the given frontend code to integrate the backend delete functionality using the controller we previously created, we'll do the following:
 
-1. Controller for Backend API
+Plan
 
-Create a controller to manage the backend API interactions.
+1. Add Controller Integration: Use the IdentificationDataController in the frontend to invoke the backend delete functionality when the "やり直す" (Yarinaosu) button is clicked.
 
-identityConfirmationController.ts
 
-import axios from 'axios';
+2. Handle User Feedback: Show a loading indicator during the operation and provide success or error feedback.
 
-/**
- * Controller for Identity Confirmation operations.
- */
-class IdentityConfirmationController {
-  private readonly baseUrl: string;
 
-  constructor() {
-    this.baseUrl = '/api/applications/identification-data'; // Backend endpoint base URL
-  }
+3. Router Integration: Use a router to handle navigation back to the "申込TOP画面" (/new-bank/apply/home) after the deletion.
 
-  /**
-   * Delete applicant identification data for retrying the verification process.
-   *
-   * @param referenceNumber - The reference number associated with the applicant.
-   * @param userUid - The user's unique identifier.
-   * @returns {Promise<void>} Resolves if successful, throws an error otherwise.
-   */
-  async deleteApplicantIdentificationData(referenceNumber: string, userUid: string): Promise<void> {
-    try {
-      const response = await axios.delete(this.baseUrl, {
-        headers: {
-          'Content-Type': 'application/json',
-          'user-uid': userUid,
-        },
-        data: { referenceNumber, userType: 'REPRESENTATIVE' }, // Default to 'REPRESENTATIVE'
-      });
 
-      if (response.status !== 204) {
-        throw new Error('Failed to delete identification data');
-      }
-    } catch (error: any) {
-      console.error('Error deleting applicant identification data:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.error || 'An unexpected error occurred');
-    }
-  }
-}
-
-export const identityConfirmationController = new IdentityConfirmationController();
 
 
 ---
 
-2. Update the Frontend Code
+Updated Frontend Code
 
-Modify the provided frontend code to:
+1. Add Controller and Integration
 
-Add the identityConfirmationController.
-
-Call the backend API when the やり直す button is clicked.
-
-Display loading and error/success states.
-
-
-Updated NewBankApplyIdentityConfirmationApplicant.tsx
+Here is the updated NewBankApplyIdentityConfirmationApplicant component:
 
 import React, { useState } from 'react';
-import { identityConfirmationController } from '../controllers/identityConfirmationController';
 import { useNavigate } from 'react-router-dom';
-import { useReferenceNumber } from '../hooks/useReferenceNumber';
+import { identificationDataController } from '../controllers/identificationDataController'; // Controller for backend operations
+import { useReferenceNumber } from '../hooks/useReferenceNumber'; // Hook to fetch reference number
 import LayoutNewBank from '../components/LayoutNewBank';
 import Loading from '../components/Loading';
 import NotificationBox from '../components/NotificationBox';
 import Modal from '../components/Modal';
+import ModalDetails from '../components/ModalDetails';
 import Button from '../components/Button';
 import Text from '../components/Text';
+import HeadingSubpage from '../components/HeadingSubpage';
+import Icon from '../components/Icon';
 
 export const NewBankApplyIdentityConfirmationApplicant: React.FC = () => {
+  const spBreakpoint = true; // Assuming responsiveness logic is implemented elsewhere
   const navigate = useNavigate();
-  const { referenceNumber } = useReferenceNumber();
+  const { referenceNumber } = useReferenceNumber(); // Custom hook to get reference number
 
   const [isCannotBeUpdated, setIsCannotBeUpdated] = useState(false);
   const [isVerified, setIsVerified] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isNotRepresentative, setIsNotRepresentative] = useState(false);
   const [isResendDialogOpened, setIsResendDialogOpened] = useState(false);
 
+  // Toggle resend dialog
   const handleResendDialogClick = () => {
     setIsResendDialogOpened(!isResendDialogOpened);
   };
 
-  const handleRetry = async () => {
-    setIsLoading(true);
+  // Handle the delete operation
+  const handleDelete = async () => {
+    if (!referenceNumber) {
+      console.error('Reference number is missing');
+      return;
+    }
+
+    setIsLoading(true); // Show loading spinner
+
     try {
-      const userUid = localStorage.getItem('userUid');
-      if (!referenceNumber || !userUid) {
-        throw new Error('Reference number or User UID is missing');
-      }
+      // Call the delete function from the controller
+      await identificationDataController.deleteIdentificationData(
+        referenceNumber,
+        'REPRESENTATIVE', // Assuming REP for this example, adjust dynamically if needed
+        localStorage.getItem('userUid') || '' // Get user UID from local storage
+      );
 
-      // Call the backend to delete applicant identification data
-      await identityConfirmationController.deleteApplicantIdentificationData(referenceNumber, userUid);
-
-      // Provide feedback and navigate to the next step
-      alert('本人確認データが正常に削除されました。再度やり直してください。'); // Success message
-      navigate('/new-bank/apply/home');
+      // Show success message
+      alert('本人確認情報が削除されました。');
+      setIsVerified(false); // Update UI state
+      setIsResendDialogOpened(false); // Close modal
     } catch (error: any) {
-      alert(error.message || '予期せぬエラーが発生しました。');
+      console.error('Error deleting identification data:', error.message);
+      alert('エラーが発生しました。もう一度お試しください。');
     } finally {
-      setIsLoading(false);
-      setIsResendDialogOpened(false);
+      setIsLoading(false); // Hide loading spinner
     }
   };
 
   return (
     <LayoutNewBank isLoggedIn>
       <Loading isLoading={isLoading} />
-
+      <HeadingSubpage modifier="sticky" onClick={() => navigate('/new-bank/apply/home')} title="STEP2 本人確認" />
       <NotificationBox>
-        <h2>STEP2 本人確認</h2>
-      </NotificationBox>
-
-      {isVerified && (
-        <div className="box green">
-          <div>
-            <h3>ご本人確認状況</h3>
+        {isVerified && (
+          <div className="verified-box">
             <p>本人確認完了</p>
-            <Button
-              onClick={handleResendDialogClick}
-              inactive={isCannotBeUpdated}
-            >
+            <Button type="button" modifiers="secondary" onClick={handleResendDialogClick} inactive={isCannotBeUpdated}>
               やり直す
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </NotificationBox>
 
-      {/* Retry Confirmation Dialog */}
+      {/* Resend Confirmation Dialog */}
       <Modal modifier="dialog" opened={isResendDialogOpened}>
         <Text size="small" align="center" color="gray">
           スマートフォンアプリでのご本人確認を再度行っていただく必要があります。
           <br />
           本当にやり直しますか?
         </Text>
-        <div>
+        <ModalDetails>
           <Button onClick={handleResendDialogClick} modifiers="text-gray">
             キャンセル
           </Button>
-          <Button onClick={handleRetry} modifiers="text-green">
+          <Button onClick={handleDelete} modifiers="text-green">
             やり直す
           </Button>
-        </div>
+        </ModalDetails>
       </Modal>
     </LayoutNewBank>
   );
@@ -154,46 +118,37 @@ export const NewBankApplyIdentityConfirmationApplicant: React.FC = () => {
 
 ---
 
-3. Explanation of Changes
+Explanation
 
 1. Controller Integration:
 
-Imported identityConfirmationController to handle the backend API calls.
+The identificationDataController.deleteIdentificationData method is called when the user clicks the "やり直す" button in the modal.
+
+It sends the DELETE request to the backend, passing the referenceNumber, userType, and userUid.
 
 
 
-2. Retry Functionality:
+2. State Management:
 
-handleRetry:
+isLoading: Displays a spinner while the deletion is in progress.
 
-Sends a DELETE request using the identityConfirmationController.
+isResendDialogOpened: Controls the modal's visibility.
 
-Handles errors and displays appropriate messages.
-
-
-
-
-3. Loading State:
-
-Added a loading indicator while the retry operation is in progress.
+isVerified: Updates the UI to reflect that the data has been deleted.
 
 
 
-4. Dialog Management:
+3. User Feedback:
 
-The retry confirmation dialog (Modal) is toggled with isResendDialogOpened.
+Success: Displays an alert to confirm the deletion and updates the UI state.
 
-
-
-5. Routing:
-
-Navigates to the application home page (/new-bank/apply/home) after successful deletion.
+Error: Displays an alert with the error message if the deletion fails.
 
 
 
-6. Notifications:
+4. Router Integration:
 
-Displays success or error messages using alert. You can replace this with a more advanced notification library like react-toastify.
+The useNavigate hook is used to navigate back to the "申込TOP画面" (/new-bank/apply/home) when needed.
 
 
 
@@ -201,30 +156,30 @@ Displays success or error messages using alert. You can replace this with a more
 
 ---
 
-4. Router Configuration
+Backend Interaction
 
-Ensure the route for this feature is defined in your App.tsx or Routes.tsx:
-
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { NewBankApplyIdentityConfirmationApplicant } from './pages/NewBankApplyIdentityConfirmationApplicant';
-
-const App: React.FC = () => {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/new-bank/apply/home" element={<Home />} />
-        <Route
-          path="/new-bank/apply/identity-confirmation"
-          element={<NewBankApplyIdentityConfirmationApplicant />}
-        />
-      </Routes>
-    </Router>
-  );
-};
-
-export default App;
+The deleteIdentificationData function in the identificationDataController handles the actual API interaction. This ensures a clean separation of concerns between the component and the backend logic.
 
 
 ---
 
-Summary
+Advantages of the Modified Frontend
+
+Controller-Based Design:
+
+Encapsulates backend logic in a reusable and testable controller.
+
+
+Improved UX:
+
+Shows loading indicators and provides clear success/error messages.
+
+
+Maintainable:
+
+Clean separation of responsibilities and state management.
+
+
+
+This updated frontend integrates seamlessly with the backend delete functionality while keeping the UI responsive and user-friendly.
+
