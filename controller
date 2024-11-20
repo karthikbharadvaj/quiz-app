@@ -1,1 +1,230 @@
 
+1. Controller for Backend API
+
+Create a controller to manage the backend API interactions.
+
+identityConfirmationController.ts
+
+import axios from 'axios';
+
+/**
+ * Controller for Identity Confirmation operations.
+ */
+class IdentityConfirmationController {
+  private readonly baseUrl: string;
+
+  constructor() {
+    this.baseUrl = '/api/applications/identification-data'; // Backend endpoint base URL
+  }
+
+  /**
+   * Delete applicant identification data for retrying the verification process.
+   *
+   * @param referenceNumber - The reference number associated with the applicant.
+   * @param userUid - The user's unique identifier.
+   * @returns {Promise<void>} Resolves if successful, throws an error otherwise.
+   */
+  async deleteApplicantIdentificationData(referenceNumber: string, userUid: string): Promise<void> {
+    try {
+      const response = await axios.delete(this.baseUrl, {
+        headers: {
+          'Content-Type': 'application/json',
+          'user-uid': userUid,
+        },
+        data: { referenceNumber, userType: 'REPRESENTATIVE' }, // Default to 'REPRESENTATIVE'
+      });
+
+      if (response.status !== 204) {
+        throw new Error('Failed to delete identification data');
+      }
+    } catch (error: any) {
+      console.error('Error deleting applicant identification data:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.error || 'An unexpected error occurred');
+    }
+  }
+}
+
+export const identityConfirmationController = new IdentityConfirmationController();
+
+
+---
+
+2. Update the Frontend Code
+
+Modify the provided frontend code to:
+
+Add the identityConfirmationController.
+
+Call the backend API when the やり直す button is clicked.
+
+Display loading and error/success states.
+
+
+Updated NewBankApplyIdentityConfirmationApplicant.tsx
+
+import React, { useState } from 'react';
+import { identityConfirmationController } from '../controllers/identityConfirmationController';
+import { useNavigate } from 'react-router-dom';
+import { useReferenceNumber } from '../hooks/useReferenceNumber';
+import LayoutNewBank from '../components/LayoutNewBank';
+import Loading from '../components/Loading';
+import NotificationBox from '../components/NotificationBox';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
+import Text from '../components/Text';
+
+export const NewBankApplyIdentityConfirmationApplicant: React.FC = () => {
+  const navigate = useNavigate();
+  const { referenceNumber } = useReferenceNumber();
+
+  const [isCannotBeUpdated, setIsCannotBeUpdated] = useState(false);
+  const [isVerified, setIsVerified] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResendDialogOpened, setIsResendDialogOpened] = useState(false);
+
+  const handleResendDialogClick = () => {
+    setIsResendDialogOpened(!isResendDialogOpened);
+  };
+
+  const handleRetry = async () => {
+    setIsLoading(true);
+    try {
+      const userUid = localStorage.getItem('userUid');
+      if (!referenceNumber || !userUid) {
+        throw new Error('Reference number or User UID is missing');
+      }
+
+      // Call the backend to delete applicant identification data
+      await identityConfirmationController.deleteApplicantIdentificationData(referenceNumber, userUid);
+
+      // Provide feedback and navigate to the next step
+      alert('本人確認データが正常に削除されました。再度やり直してください。'); // Success message
+      navigate('/new-bank/apply/home');
+    } catch (error: any) {
+      alert(error.message || '予期せぬエラーが発生しました。');
+    } finally {
+      setIsLoading(false);
+      setIsResendDialogOpened(false);
+    }
+  };
+
+  return (
+    <LayoutNewBank isLoggedIn>
+      <Loading isLoading={isLoading} />
+
+      <NotificationBox>
+        <h2>STEP2 本人確認</h2>
+      </NotificationBox>
+
+      {isVerified && (
+        <div className="box green">
+          <div>
+            <h3>ご本人確認状況</h3>
+            <p>本人確認完了</p>
+            <Button
+              onClick={handleResendDialogClick}
+              inactive={isCannotBeUpdated}
+            >
+              やり直す
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Retry Confirmation Dialog */}
+      <Modal modifier="dialog" opened={isResendDialogOpened}>
+        <Text size="small" align="center" color="gray">
+          スマートフォンアプリでのご本人確認を再度行っていただく必要があります。
+          <br />
+          本当にやり直しますか?
+        </Text>
+        <div>
+          <Button onClick={handleResendDialogClick} modifiers="text-gray">
+            キャンセル
+          </Button>
+          <Button onClick={handleRetry} modifiers="text-green">
+            やり直す
+          </Button>
+        </div>
+      </Modal>
+    </LayoutNewBank>
+  );
+};
+
+
+---
+
+3. Explanation of Changes
+
+1. Controller Integration:
+
+Imported identityConfirmationController to handle the backend API calls.
+
+
+
+2. Retry Functionality:
+
+handleRetry:
+
+Sends a DELETE request using the identityConfirmationController.
+
+Handles errors and displays appropriate messages.
+
+
+
+
+3. Loading State:
+
+Added a loading indicator while the retry operation is in progress.
+
+
+
+4. Dialog Management:
+
+The retry confirmation dialog (Modal) is toggled with isResendDialogOpened.
+
+
+
+5. Routing:
+
+Navigates to the application home page (/new-bank/apply/home) after successful deletion.
+
+
+
+6. Notifications:
+
+Displays success or error messages using alert. You can replace this with a more advanced notification library like react-toastify.
+
+
+
+
+
+---
+
+4. Router Configuration
+
+Ensure the route for this feature is defined in your App.tsx or Routes.tsx:
+
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { NewBankApplyIdentityConfirmationApplicant } from './pages/NewBankApplyIdentityConfirmationApplicant';
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/new-bank/apply/home" element={<Home />} />
+        <Route
+          path="/new-bank/apply/identity-confirmation"
+          element={<NewBankApplyIdentityConfirmationApplicant />}
+        />
+      </Routes>
+    </Router>
+  );
+};
+
+export default App;
+
+
+---
+
+Summary
