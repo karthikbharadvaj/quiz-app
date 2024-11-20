@@ -1,121 +1,73 @@
-Update the Type of participantNameList: In the useEventInfo hook or wherever participantNameList is defined, change its type to:
 
+To include both the name and department in the ParticipantsBox component (similar to what you have displayed), we can modify the map function to include additional details. Here's how the code will look:
+
+Updated ParticipantsBox
 tsx
 Copy code
-const [participantNameList, setParticipantNameList] = useState<{ name: string; department?: string }[]>([]);
-Here:
+import React from 'react';
+import { Box, Avatar, Typography, Divider, IconButton } from '@mui/material';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { useNavigate } from 'react-router-dom';
 
-Each element in participantNameList is now an object with a name property (string) and an optional department property (string).
-Update Data Fetching Logic: When you fetch data and set participantNameList, ensure the structure matches the updated type:
+interface Participant {
+    name: string;
+    department: string;
+}
 
-tsx
-Copy code
-const onFetchEventParticipants = async () => {
-    try {
-        const { data } = await fetchEventParticipants(id ?? "1");
-        setParticipantNameList(
-            data
-                .filter((info) => info !== null)
-                .map(({ name, department }: { name: string; department?: string }) => ({
-                    name,
-                    department,
-                }))
-        );
-    } catch (err: any) {
-        console.error("Failed to fetch participants:", err);
-    }
-};
-Refactor the Rendering Logic
-Now that participantNameList contains objects with name and department, you can safely access these properties when rendering.
+interface ParticipantsBoxProps {
+    participants: Participant[];
+}
 
-Update your rendering logic as follows:
-
-tsx
-Copy code
-{participantNameList.map((participant, index) => (
-    <Box key={index} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <Avatar sx={{ width: 40, height: 40, bgcolor: "#3f51b5", mr: 2 }}>
-            {participant.name.charAt(0).toUpperCase()}
-        </Avatar>
-        <Box>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                {participant.name}
-            </Typography>
-            <Typography variant="body2" sx={{ color: "#6e6e6e" }}>
-                {participant.department || "No department"}
-            </Typography>
-        </Box>
-    </Box>
-))}
-Summary of Changes
-Type Update:
-
-Changed participantNameList type to Array<{ name: string; department?: string }>.
-Data Fetching:
-
-Ensure the fetched data is mapped into objects with name and department.
-Rendering:
-
-Access name and department properties in the rendering logic.
-Full Example
-Here’s the updated ParticipantListScreen:
-
-tsx
-Copy code
-import React, { useEffect } from "react";
-import { Box, Avatar, Typography, Divider, IconButton } from "@mui/material";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import CloseIcon from "@mui/icons-material/Close";
-import { useNavigate } from "react-router-dom";
-import { useEventInfo } from "../hooks/useEventInfo";
-
-const ParticipantListScreen: React.FC = () => {
+const ParticipantsBox: React.FC<ParticipantsBoxProps> = ({ participants }) => {
     const navigate = useNavigate();
-    const { participantNameList, onFetchEventParticipants } = useEventInfo();
 
-    useEffect(() => {
-        if (!participantNameList.length) {
-            onFetchEventParticipants();
-        }
-    }, [participantNameList, onFetchEventParticipants]);
+    const onClickForward = () => {
+        navigate('/EventInfo/30/participants'); // Update route dynamically
+    };
 
     return (
-        <Box sx={{ padding: 2 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                <IconButton onClick={() => navigate(-1)}>
-                    <ArrowBackIosNewIcon />
-                </IconButton>
-                <Typography variant="h6" sx={{ fontWeight: "bold", textAlign: "center", flex: 1 }}>
-                    参加メンバー
-                </Typography>
-                <IconButton onClick={() => navigate("/")}>
-                    <CloseIcon />
-                </IconButton>
-            </Box>
-
-            {participantNameList.length === 0 ? (
-                <Typography sx={{ textAlign: "center", mt: 2 }}>No participants found</Typography>
-            ) : (
-                participantNameList.map((participant, index) => (
-                    <Box key={index} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                        <Avatar sx={{ width: 40, height: 40, bgcolor: "#3f51b5", mr: 2 }}>
+        <Box sx={{ width: '100%', flexDirection: 'column', display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
+                メンバー
+            </Typography>
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flex: 1,
+                    position: 'relative',
+                    gap: 0.5,
+                }}
+            >
+                {participants.slice(0, 5).map((participant, index) => (
+                    <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mr: 2 }}>
+                        <Avatar
+                            sx={{
+                                width: 32,
+                                height: 32,
+                                bgcolor: '#73C6C8',
+                                color: '#fff',
+                                fontSize: '14',
+                            }}
+                        >
                             {participant.name.charAt(0).toUpperCase()}
                         </Avatar>
-                        <Box>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                {participant.name}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: "#6e6e6e" }}>
-                                {participant.department || "No department"}
-                            </Typography>
-                        </Box>
+                        <Typography variant="body2" sx={{ mt: 1, textAlign: 'center' }}>
+                            {participant.name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#6e6e6e', textAlign: 'center' }}>
+                            {participant.department}
+                        </Typography>
                     </Box>
-                ))
-            )}
-
-            <Divider sx={{ my: 1 }} />
+                ))}
+            </Box>
+            <IconButton onClick={onClickForward} sx={{ position: 'absolute', right: '0' }}>
+                <ArrowForwardIosIcon />
+            </IconButton>
+            <Divider sx={{ my: 2 }} />
         </Box>
     );
 };
 
-export default ParticipantListScr;
+export default ParticipantsBox;
