@@ -1,7 +1,3 @@
-Here's the updated implementation:
-
-tsx
-Copy code
 import React, { useEffect } from "react";
 import { Box, Avatar, Typography, Divider, IconButton } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
@@ -37,10 +33,14 @@ const ParticipantListScreen: React.FC = () => {
                 </IconButton>
             </Box>
 
-            {/* List of Participants */}
+            {/* Conditional Rendering for Participants */}
             {participantNameList.length === 0 ? (
-                <Typography sx={{ textAlign: "center", mt: 2 }}>No participants found</Typography>
+                // Display message when no participants are available
+                <Typography sx={{ textAlign: "center", mt: 4, fontSize: 16, color: "#6e6e6e" }}>
+                    No participants found
+                </Typography>
             ) : (
+                // Render participants when list is available
                 participantNameList.map((participant, index) => (
                     <Box key={index} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                         <Avatar sx={{ width: 40, height: 40, bgcolor: "#3f51b5", mr: 2 }}>
@@ -65,46 +65,3 @@ const ParticipantListScreen: React.FC = () => {
 };
 
 export default ParticipantListScreen;
-Key Changes and Fixes
-Correct URL Handling:
-
-The URL issue occurs when the id is not passed correctly. This is handled in useEventInfo where the API call is made. Make sure the id is properly fetched using useParams in the useEventInfo hook.
-Reuse of useEventInfo:
-
-Instead of duplicating the logic for fetching participants, the custom hook useEventInfo is used in both EventInfoPage and ParticipantListScreen.
-Conditional Fetching:
-
-The participantNameList is fetched only if it's not already populated, preventing unnecessary API calls.
-Rendering Participants:
-
-Ensures the list of participants is rendered with name and department. If the department is missing, a fallback value ("No department") is displayed.
-Navigation Buttons:
-
-The back button navigates to the previous page (navigate(-1)).
-The close button navigates to the home page (navigate("/")).
-Fixing the URL Issue in useEventInfo
-Ensure that the API call in useEventInfo correctly interpolates the id:
-
-tsx
-Copy code
-const onFetchEventParticipants = async () => {
-    try {
-        const { data } = await fetchEventParticipants(id ?? "1"); // Ensure `id` is correctly passed
-        setParticipantNameList(
-            data.map(({ name, department }: { name: string; department: string }) => ({
-                name,
-                department,
-            }))
-        );
-    } catch (err: any) {
-        console.error("Failed to fetch participants:", err);
-    }
-};
-Ensure id is obtained using useParams and is available in useEventInfo:
-
-tsx
-Copy code
-import { useParams } from "react-router-dom";
-
-const { id } = useParams<{ id: string }>();
-Summary
