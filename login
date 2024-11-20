@@ -1,73 +1,71 @@
+Update the fetchEventParticipants function to process the response:
 
-To include both the name and department in the ParticipantsBox component (similar to what you have displayed), we can modify the map function to include additional details. Here's how the code will look:
-
-Updated ParticipantsBox
 tsx
 Copy code
-import React from 'react';
-import { Box, Avatar, Typography, Divider, IconButton } from '@mui/material';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { useNavigate } from 'react-router-dom';
+import axios, { AxiosRequestConfig } from "axios";
+import { UserInfoTypeFromBackendRes } from "../entities/user";
 
-interface Participant {
-    name: string;
-    department: string;
-}
+export const fetchEventParticipants = async (
+  id: string
+): Promise<{ name: string; department: string }[]> => {
+  const options: AxiosRequestConfig = {
+    url: `event/participants/${id}`,
+    method: "GET",
+  };
 
-interface ParticipantsBoxProps {
-    participants: Participant[];
-}
+  const { data } = await axios<UserInfoTypeFromBackendRes[]>(options);
 
-const ParticipantsBox: React.FC<ParticipantsBoxProps> = ({ participants }) => {
-    const navigate = useNavigate();
-
-    const onClickForward = () => {
-        navigate('/EventInfo/30/participants'); // Update route dynamically
-    };
-
-    return (
-        <Box sx={{ width: '100%', flexDirection: 'column', display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
-                メンバー
-            </Typography>
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flex: 1,
-                    position: 'relative',
-                    gap: 0.5,
-                }}
-            >
-                {participants.slice(0, 5).map((participant, index) => (
-                    <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mr: 2 }}>
-                        <Avatar
-                            sx={{
-                                width: 32,
-                                height: 32,
-                                bgcolor: '#73C6C8',
-                                color: '#fff',
-                                fontSize: '14',
-                            }}
-                        >
-                            {participant.name.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Typography variant="body2" sx={{ mt: 1, textAlign: 'center' }}>
-                            {participant.name}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#6e6e6e', textAlign: 'center' }}>
-                            {participant.department}
-                        </Typography>
-                    </Box>
-                ))}
-            </Box>
-            <IconButton onClick={onClickForward} sx={{ position: 'absolute', right: '0' }}>
-                <ArrowForwardIosIcon />
-            </IconButton>
-            <Divider sx={{ my: 2 }} />
-        </Box>
-    );
+  // Map and extract the required fields (name and department)
+  return data.map((participant) => ({
+    name: participant.name,
+    department: participant.department || "Unknown", // Fallback for undefined departments
+  }));
 };
+Key Changes
+Explicit Typing of Response:
 
-export default ParticipantsBox;
+The axios call is typed as UserInfoTypeFromBackendRes[], ensuring TypeScript knows the structure of the returned data.
+Mapping the Response:
+
+The response is mapped to extract only name and department.
+Fallback for department:
+
+If department is optional (string | undefined), provide a fallback value like "Unknown".
+Proper Return Type:
+
+The function now explicitly returns Promise<{ name: string; department: string }[]>, which aligns with the expected usage.
+Updated UserInfoTypeFromBackendRes
+Ensure the UserInfoTypeFromBackendRes type includes all the fields returned by the backend:
+
+tsx
+Copy code
+export type UserInfoTypeFromBackendRes = {
+  id: number;
+  name: string;
+  password: string;
+  department?: string; // Optional
+  email?: string;
+  tags?: string[];
+  participants?: string[];
+};
+Testing the Function
+To test the fetchEventParticipants function:
+
+tsx
+Copy code
+fetchEventParticipants("1")
+  .then((participants) => {
+    console.log(participants);
+    // Expected output:
+    // [
+    //   { name: "John", department: "Engineering" },
+    //   { name: "Jane", department: "Marketing" },
+    // ]
+  })
+  .catch((err) => {
+    console.error("Error fetching participants:", err);
+  });
+Final Thoughts
+With this approach:
+
+The response is correctly transforme
