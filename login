@@ -1,24 +1,54 @@
-Updated Code
-1. Update Forward Button in ParticipantsBox
-Update the forward button in ParticipantsBox to navigate to the new page.
+1. Update the Present Page (EventInfo)
+In your EventInfo page, add the forward arrow and configure navigation to the ParticipantList page.
 
 tsx
 Copy code
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { Box, Typography, IconButton, Avatar } from "@mui/material";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-// Pass the participants list to the next screen via route state or API
-const handleNavigate = () => {
-    navigate("/participants", { state: { participants } }); // Passing participants as route state
+const EventInfo: React.FC = () => {
+    const { id } = useParams<{ id: string }>(); // Get the event ID from the URL
+    const navigate = useNavigate();
+
+    const handleNavigate = () => {
+        navigate(`/participants/${id}`); // Navigate to the participants list with the event ID
+    };
+
+    return (
+        <Box sx={{ padding: 2 }}>
+            {/* Event Info */}
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+                イベント情報
+            </Typography>
+
+            {/* Participants Section */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                <Box sx={{ display: "flex", gap: 0.5 }}>
+                    {["A", "B", "C", "D", "E"].map((name, index) => (
+                        <Avatar key={index} sx={{ bgcolor: "#3f51b5" }}>
+                            {name}
+                        </Avatar>
+                    ))}
+                </Box>
+                <IconButton onClick={handleNavigate}>
+                    <ArrowForwardIosIcon />
+                </IconButton>
+            </Box>
+        </Box>
+    );
 };
-2. Create ParticipantsScreen Component
-Create a new component for the participants' list.
+
+export default EventInfo;
+2. Add the ParticipantList Page
+This page fetches participants based on the event ID passed through the URL.
 
 tsx
 Copy code
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Box, Avatar, Typography, IconButton } from "@mui/material";
-import { useLocation, useNavigate } from "react-router-dom";
 import CloseIcon from "@mui/icons-material/Close";
 
 interface Participant {
@@ -26,48 +56,57 @@ interface Participant {
     department: string;
 }
 
-const ParticipantsScreen: React.FC = () => {
+const ParticipantList: React.FC = () => {
+    const { id } = useParams<{ id: string }>(); // Get the event ID from the URL
     const navigate = useNavigate();
-    const location = useLocation();
-    const participants: Participant[] = location.state?.participants || [];
+    const [participants, setParticipants] = useState<Participant[]>([]);
+
+    useEffect(() => {
+        // Fetch participants from API
+        const fetchParticipants = async () => {
+            try {
+                const response = await fetch(`/api/EventInfo/${id}/participants`); // Replace with your backend API
+                const data = await response.json();
+                setParticipants(data);
+            } catch (error) {
+                console.error("Error fetching participants:", error);
+            }
+        };
+
+        fetchParticipants();
+    }, [id]);
 
     const handleBack = () => {
-        navigate(-1); // Go back to the previous page
+        navigate(-1); // Navigate back to the EventInfo page
     };
 
     return (
         <Box sx={{ padding: 2 }}>
             {/* Header */}
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <IconButton onClick={handleBack}>
-                    <CloseIcon />
-                </IconButton>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
                     参加メンバー
                 </Typography>
+                <IconButton onClick={handleBack}>
+                    <CloseIcon />
+                </IconButton>
             </Box>
 
-            {/* Participant List */}
-            <Box sx={{ marginTop: 2 }}>
+            {/* Participants List */}
+            <Box>
                 {participants.map((participant, index) => (
                     <Box
                         key={index}
                         sx={{
                             display: "flex",
                             alignItems: "center",
-                            marginBottom: 2,
-                            paddingBottom: 1,
+                            padding: 1,
                             borderBottom: "1px solid #e0e0e0",
                         }}
                     >
-                        {/* Avatar */}
-                        <Avatar
-                            sx={{ width: 40, height: 40, marginRight: 2, bgcolor: "#3f51b5" }}
-                        >
+                        <Avatar sx={{ marginRight: 2, bgcolor: "#3f51b5" }}>
                             {participant.name.charAt(0).toUpperCase()}
                         </Avatar>
-
-                        {/* Name and Department */}
                         <Box>
                             <Typography variant="body1" sx={{ fontWeight: 700 }}>
                                 {participant.name}
@@ -83,38 +122,43 @@ const ParticipantsScreen: React.FC = () => {
     );
 };
 
-export default ParticipantsScreen;
-3. Add Route for the New Screen
-Make sure the route for the new screen is set up in your App or routing configuration.
+export default ParticipantList;
+3. Routing Setup
+Add routes for both EventInfo and ParticipantList in your app's routing configuration.
 
 tsx
 Copy code
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ParticipantsBox from "./components/ParticipantsBox";
-import ParticipantsScreen from "./components/ParticipantsScreen";
+import EventInfo from "./pages/EventInfo";
+import ParticipantList from "./pages/ParticipantList";
 
 const App: React.FC = () => {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<ParticipantsBox />} />
-                <Route path="/participants" element={<ParticipantsScreen />} />
+                <Route path="/eventinfo/:id" element={<EventInfo />} />
+                <Route path="/participants/:id" element={<ParticipantList />} />
             </Routes>
         </Router>
     );
 };
 
 export default App;
-4. Sample Data Structure for Participants
-Pass the participants as a prop or via route state.
+Backend API for Participants
+Ensure your backend API provides participant data based on the event ID.
 
 typescript
 Copy code
-const participants = [
-    { name: "総研 花子", department: "DXシステム本部" },
-    { name: "山田 太郎", department: "営業部" },
-    { name: "田中 一郎", department: "技術部" },
-    // Add more participants as needed
-];
-Design Adjustments
+router.get("/api/EventInfo/:id/participants", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const participants = await getEventParticipantsUseCase.getEventParticipants({ id });
+        res.json(participants);
+    } catch (error) {
+        console.error("Error fetching participants:", error);
+        res.status(500).json({ error: "Failed to fetch participants" });
+    }
+});
+Final Workflow
