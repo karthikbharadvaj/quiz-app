@@ -1,195 +1,99 @@
-Complete Controller File: deleteApplicationDataController.ts
-typescript
+Code Implementation
+tsx
 Copy code
-import { Request, Response, NextFunction } from 'express';
-import { DeleteApplicantIdentificationDataUseCase } from '../useCases/DeleteApplicantIdentificationDataUseCase';
+import React, { useState } from "react";
+import { Box, Button, Typography, IconButton } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 
-/**
- * Controller to delete applicant identification data.
- */
-export async function deleteApplicationDataController(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  try {
-    const { referenceNumber, userType } = req.body;
+const EventAction = () => {
+  // State to manage "参加予定" status
+  const [isParticipating, setIsParticipating] = useState(false);
 
-    // Validate request body
-    if (!referenceNumber || !userType) {
-      return res.status(400).json({ error: 'Reference number and user type are required.' });
-    }
+  // Handler to toggle participation state
+  const handleParticipation = () => {
+    setIsParticipating((prev) => !prev);
+  };
 
-    // Instantiate and execute the use case
-    const deleteUseCase = new DeleteApplicantIdentificationDataUseCase();
-    await deleteUseCase.execute({ referenceNumber, userType });
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        flexDirection: "row",
+      }}
+    >
+      {/* Orange Circle */}
+      <Button
+        variant="contained"
+        onClick={handleParticipation}
+        sx={{
+          backgroundColor: isParticipating ? "#FFA500" : "#D3D3D3", // Orange if participating
+          color: "#fff",
+          borderRadius: "20px",
+          padding: "5px 15px",
+          textTransform: "none",
+          fontSize: "14px",
+          boxShadow: "none",
+          ":hover": {
+            backgroundColor: isParticipating ? "#FF8C00" : "#C0C0C0", // Slightly darker on hover
+          },
+        }}
+      >
+        {isParticipating ? "参加予定" : "参加キャンセル"}
+      </Button>
 
-    // Respond with a success status
-    res.status(204).send();
-  } catch (error) {
-    console.error('Error in deleteApplicationDataController:', error);
-    next(error); // Pass error to middleware
-  }
-}
-Complete Use Case File: DeleteApplicantIdentificationDataUseCase.ts
-typescript
-Copy code
-import { getDbClient } from '../config/dbClient';
+      {/* Edit Icon */}
+      <IconButton
+        sx={{
+          backgroundColor: "#f0f0f0",
+          borderRadius: "50%",
+          padding: "5px",
+          ":hover": {
+            backgroundColor: "#e0e0e0",
+          },
+        }}
+        onClick={() => console.log("Edit button clicked")}
+      >
+        <EditIcon fontSize="small" />
+      </IconButton>
+    </Box>
+  );
+};
 
-/**
- * Use case to handle deletion of applicant identification data.
- */
-export class DeleteApplicantIdentificationDataUseCase {
-  /**
-   * Executes the deletion of applicant identification data.
-   *
-   * @param {Object} params - Parameters for the deletion process.
-   * @param {string} params.referenceNumber - The reference number for the applicant.
-   * @param {string} params.userType - The user type ('AGENT' or 'REPRESENTATIVE').
-   */
-  async execute({ referenceNumber, userType }: { referenceNumber: string; userType: string }): Promise<void> {
-    const dbClient = await getDbClient();
-
-    try {
-      // Perform deletion in parallel
-      await Promise.all([
-        dbClient.execute(
-          `DELETE FROM jpki_identification_table WHERE reference_number = $1 AND user_type = $2`,
-          [referenceNumber, userType]
-        ),
-        dbClient.execute(
-          `DELETE FROM application_table WHERE reference_number = $1`,
-          [referenceNumber]
-        ),
-      ]);
-
-      // Update validation status
-      await dbClient.execute(
-        `UPDATE application_status_table SET is_valid = false WHERE reference_number = $1`,
-        [referenceNumber]
-      );
-    } catch (error) {
-      console.error('Error executing DeleteApplicantIdentificationDataUseCase:', error);
-      throw new Error('Failed to delete applicant identification data.');
-    } finally {
-      // Close the database connection if needed
-      await dbClient.close();
-    }
-  }
-}
-Supporting Config: dbClient.ts
-If the getDbClient function is not defined, you need to implement it. Below is an example configuration for managing a PostgreSQL database client:
-
-typescript
-Copy code
-import { Pool, PoolClient } from 'pg';
-
-let pool: Pool;
-
-/**
- * Initialize the database pool if not already initialized.
- */
-function initializePool(): Pool {
-  if (!pool) {
-    pool = new Pool({
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      port: Number(process.env.DB_PORT),
-    });
-  }
-  return pool;
-}
-
-/**
- * Get a database client from the connection pool.
- */
-export async function getDbClient(): Promise<PoolClient> {
-  const pool = initializePool();
-  return pool.connect();
-}
-Router File: routes.ts
-Integrate the controller into your Express router:
-
-typescript
-Copy code
-import { Router } from 'express';
-import { deleteApplicationDataController } from '../controllers/deleteApplicationDataController';
-
-const router = Router();
-
-// Route to handle the deletion of applicant identification data
-router.delete('/applications/identification-data', deleteApplicationDataController);
-
-export default router;
-Folder Structure
-Ensure your folder structure is organized as follows:
-
-arduino
-Copy code
-src/
-├── config/
-│   └── dbClient.ts
-├── controllers/
-│   └── deleteApplicationDataController.ts
-├── useCases/
-│   └── DeleteApplicantIdentificationDataUseCase.ts
-├── routes/
-│   └── routes.ts
+export default EventAction;
 Key Features
-Controller:
+Orange Circle Button (参加予定):
 
-Validates the request body.
-Instantiates and invokes the DeleteApplicantIdentificationDataUseCase.
-Use Case:
+The button's background color changes based on the isParticipating state.
+Clicking the button toggles the isParticipating state.
+Edit Button:
 
-Handles the core logic for deleting data.
-Deletes data from jpki_identification_table and application_table.
-Updates the validation status in application_status_table.
-Uses Promise.all for concurrent operations.
-Database Client:
+Displays an edit icon.
+Logs a message to the console when clicked (can later be replaced with actual functionality).
+Styling
+Orange Button:
 
-Implements getDbClient to manage the database connection pool.
-Ensures efficient and reusable database operations.
-Error Handling:
+Rounded (borderRadius: "20px").
+Dynamic background color based on state.
+Edit Button:
 
-Errors in the use case are propagated to the controller, which logs them and passes them to middleware.
-Example Environment Variables
-Ensure your .env file includes the following database configuration:
+Circular, with a hover effect.
+Usage
+Import and use this component wherever needed:
 
-env
+tsx
 Copy code
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=your_database_name
-Testing the Controller
-Test Case for Controller
-Use a tool like Jest to test the controller:
+import EventAction from "./EventAction";
 
-typescript
-Copy code
-import request from 'supertest';
-import { server } from '../app'; // Assuming your Express app is exported from app.ts
+const App = () => {
+  return (
+    <div>
+      <h1>Event Details</h1>
+      <EventAction />
+    </div>
+  );
+};
 
-describe('DELETE /applications/identification-data', () => {
-  it('should delete applicant identification data successfully', async () => {
-    const response = await request(server)
-      .delete('/applications/identification-data')
-      .send({ referenceNumber: '123456', userType: 'AGENT' });
-
-    expect(response.status).toBe(204);
-  });
-
-  it('should return 400 if referenceNumber or userType is missing', async () => {
-    const response = await request(server)
-      .delete('/applications/identification-data')
-      .send({ userType: 'AGENT' }); // Missing referenceNumber
-
-    expect(response.status).toBe(400);
-    expect(response.body).toEqual({ error: 'Reference number and user type are required.' });
-  });
-});
-Summary
+export default App;
+Output
