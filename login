@@ -1,37 +1,90 @@
+Updated Code with Dynamic Participation Handling
+tsx
+Copy code
+import React from "react";
+import { Box, Typography, Button } from "@mui/material";
 
-const EventStatus = () => {
-  // State to control display (currently false, so it won't display)
-  const isDisplayed = false; // Change to `true` to display the oval
-
+const YourComponent = ({ tags, isParticipating, onClickJoinBtn, onClickCancelParticipation }) => {
   return (
     <Box
       sx={{
-        display: isDisplayed ? "flex" : "none", // Show only when `isDisplayed` is true
+        display: "flex",
+        justifyContent: "space-between",
         alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#FFA500", // Orange color
-        color: "#fff",
-        borderRadius: "20px", // High border radius for oval shape
-        width: "120px", // Adjust width for the oval shape
-        height: "40px", // Adjust height for the oval shape
-        textAlign: "center",
-        fontSize: "14px",
-        fontWeight: "bold",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        width: "100%",
+        marginBottom: 2,
       }}
     >
-      <Typography sx={{ fontSize: "14px", fontWeight: "bold" }}>参加予定</Typography>
+      {/* Tags aligned to the left */}
+      <TagListBox tags={tags} />
+
+      {/* Right section */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {isParticipating ? (
+          // Display "参加予定" tag if the user is participating
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#F18F01",
+              color: "#FFFFFF",
+              borderRadius: "50px",
+              padding: "6px 12px",
+              fontSize: "14px",
+            }}
+          >
+            参加予定
+          </Box>
+        ) : (
+          // Display participate button if the user is not participating
+          <Button
+            sx={{
+              borderRadius: 10,
+              background: "#429ADD",
+              color: "#FFFFFF",
+              height: 40,
+              padding: "0 16px",
+              textTransform: "none",
+              fontSize: "16px",
+            }}
+            onClick={onClickJoinBtn}
+          >
+            参加する
+          </Button>
+        )}
+        {/* Cancel button for participating users */}
+        {isParticipating && (
+          <Button
+            sx={{
+              borderRadius: 10,
+              background: "#D32F2F",
+              color: "#FFFFFF",
+              height: 40,
+              padding: "0 16px",
+              textTransform: "none",
+              fontSize: "16px",
+            }}
+            onClick={onClickCancelParticipation}
+          >
+            参加キャンセル
+          </Button>
+        )}
+      </Box>
     </Box>
   );
 };
 
-export default EventStatus;
-Key Adjustments for Oval Shape
-Oval Shape Styling:
+export default YourComponent;
+Explanation of Changes
+Dynamic Rendering:
 
-The width is greater than the height (e.g., 120px width and 40px height).
-borderRadius: "20px" ensures smooth corners and creates the oval effect.
-Dynamic Display Control:
+If the user is participating (isParticipating === true), display the "参加予定" tag.
+If not, display the "参加する" button.
+Cancel Button:
 
-isDisplayed is set to false initially, so the oval will not render.
-Set isDisplayed = true to show the oval.
+A "参加キャンセル" button is added when the user is participating, allowing them to cancel their participation.
+Styling:
+
+The "参加予定" tag is styled as a rounded orange circle with white text.
+The buttons ("参加する" and "参加キャンセル") are styled with different colors to differentiate their purposes.
