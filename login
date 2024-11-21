@@ -1,12 +1,7 @@
-Code Implementation
-tsx
-Copy code
-import React from "react";
-import { Box, Typography } from "@mui/material";
 
 const EventStatus = () => {
-  // State to handle the display logic
-  const isDisplayed = false; // For now, always set to false
+  // State to control display (currently false, so it won't display)
+  const isDisplayed = false; // Change to `true` to display the oval
 
   return (
     <Box
@@ -16,9 +11,9 @@ const EventStatus = () => {
         justifyContent: "center",
         backgroundColor: "#FFA500", // Orange color
         color: "#fff",
-        borderRadius: "50%",
-        width: "80px", // Adjust circle size
-        height: "80px",
+        borderRadius: "20px", // High border radius for oval shape
+        width: "120px", // Adjust width for the oval shape
+        height: "40px", // Adjust height for the oval shape
         textAlign: "center",
         fontSize: "14px",
         fontWeight: "bold",
@@ -31,41 +26,12 @@ const EventStatus = () => {
 };
 
 export default EventStatus;
-Key Features
-Always Orange Circle:
+Key Adjustments for Oval Shape
+Oval Shape Styling:
 
-The circle is styled using borderRadius: "50%" and backgroundColor: "#FFA500" (orange).
-Handle Display:
+The width is greater than the height (e.g., 120px width and 40px height).
+borderRadius: "20px" ensures smooth corners and creates the oval effect.
+Dynamic Display Control:
 
-The circle's visibility is controlled by the isDisplayed variable.
-Currently, it is set to false, so the circle won't appear.
-Typography Inside Circle:
-
-The text "参加予定" is centered inside the circle using alignItems and justifyContent.
-Usage Example
-tsx
-Copy code
-import EventStatus from "./EventStatus";
-
-const App = () => {
-  return (
-    <div>
-      <h1>Event Details</h1>
-      <EventStatus />
-    </div>
-  );
-};
-
-export default App;
-Expected Behavior
-When isDisplayed is false:
-
-The circle will not render (hidden from view).
-When isDisplayed is true:
-
-The orange circle with "参加予定" will be visible.
-Customization Options
-To permanently show the circle, set isDisplayed = true:
-tsx
-Copy code
-const isDisplayed = true;
+isDisplayed is set to false initially, so the oval will not render.
+Set isDisplayed = true to show the oval.
