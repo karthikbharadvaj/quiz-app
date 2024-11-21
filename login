@@ -1,142 +1,168 @@
 
-Step 1: Pass id to the Custom Hook
-In the component where you use useEventInfo, ensure the id is passed as an argument. You can get the id from the route parameters using useParams from react-router-dom.
+Here’s how you can structure the delete use case for the above context, leveraging a similar structure to the provided getApplicationData use case but tailored for deletion:
 
-tsx
+Delete Use Case
+This use case will:
+
+Extract necessary data (like referenceNumber and userType) from the request.
+Perform deletions using repositories or API clients.
+Return appropriate HTTP status codes and results.
+Here’s how the delete use case might look:
+
+typescript
 Copy code
-import { useParams } from "react-router-dom";
-import { useEventInfo } from "../hooks/useEventInfo";
+import { Request, Response, NextFunction } from 'express';
+import { apiClient } from '../api/apiClient';
+import { AxiosRequestConfig } from 'axios';
+import { DeleteApplicantIdentificationDataUseCase } from '../useCases/DeleteApplicantIdentificationDataUseCase';
 
-const EventInfo = () => {
-  const { id } = useParams<{ id: string }>(); // Extract the ID from the route
+export function deleteApplicationData(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  const path = 'api/open-bank-account/applications'; // Backend API endpoint
+  const config: AxiosRequestConfig = {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    responseType: 'json',
+  };
 
-  const {
-    title,
-    tags,
-    contents,
-    participantNameList,
-    onFetchEventInfo,
-    onFetchEventParticipants,
-  } = useEventInfo(id ?? "1"); // Pass the ID to the hook
+  const { referenceNumber, userType } = req.body;
 
-  useEffect(() => {
-    onFetchEventInfo();
-    onFetchEventParticipants();
-  }, [onFetchEventInfo, onFetchEventParticipants]);
+  apiClient
+    .delete(path, {
+      ...config,
+      data: {
+        referenceNumber,
+        userType,
+      },
+    })
+    .then(() => {
+      const useCase = new DeleteApplicantIdentificationDataUseCase({
+        referenceNumber,
+        userType,
+      });
 
-  return (
-    <div>
-      {/* Your component UI */}
-    </div>
-  );
-};
+      // Perform the deletion via the use case
+      return useCase.deleteIdentificationData();
+    })
+    .then(() => {
+      // Respond with success
+      res.status(204).json({
+        message: 'Applicant identification data deleted successfully',
+      });
+    })
+    .catch((err) => {
+      next(err); // Pass the error to the error handler
+    });
+}
+Explanation
+Request Handling:
 
-export default EventInfo;
-Step 2: Update the Custom Hook
-Ensure the useEventInfo hook is designed to accept the id parameter:
+Extracts the referenceNumber and userType from the request body.
+API Client Deletion:
 
-tsx
+Calls the backend delete endpoint with the necessary data.
+Use Case Integration:
+
+Initializes and executes the DeleteApplicantIdentificationDataUseCase to handle application-specific logic.
+Error Handling:
+
+Any errors encountered during the API call or use case execution are passed to the next middleware using next(err).
+DeleteApplicantIdentificationDataUseCase
+Below is an example of how the DeleteApplicantIdentificationDataUseCase might look, focusing on business logic:
+
+typescript
 Copy code
-import { useState, useEffect } from "react";
-import { fetchEventParticipants } from "../services/fetchEventParticipants";
+export class DeleteApplicantIdentificationDataUseCase {
+  private referenceNumber: string;
+  private userType: string;
 
-export const useEventInfo = (id: string) => {
-  const [participantNameList, setParticipantNameList] = useState<
-    { name: string; department: string }[]
-  >([]);
+  constructor({ referenceNumber, userType }: { referenceNumber: string; userType: string }) {
+    this.referenceNumber = referenceNumber;
+    this.userType = userType;
+  }
 
-  const onFetchEventParticipants = async () => {
+  async deleteIdentificationData(): Promise<void> {
     try {
-      const data = await fetchEventParticipants(id);
-      setParticipantNameList(data); // Set the fetched data
-    } catch (err) {
-      console.error("Error fetching participants:", err);
+      const dbClient = await getDbClient();
+
+      // Perform database deletions
+      await Promise.all([
+        dbClient.execute(
+          `DELETE FROM jpki_identification_table WHERE reference_number = $1 AND user_type = $2`,
+          [this.referenceNumber, this.userType]
+        ),
+        dbClient.execute(
+          `DELETE FROM application_table WHERE reference_number = $1`,
+          [this.referenceNumber]
+        ),
+      ]);
+
+      // Optionally update other states, such as validation
+      await dbClient.execute(
+        `UPDATE application_status_table SET is_valid = false WHERE reference_number = $1`,
+        [this.referenceNumber]
+      );
+    } catch (error) {
+      console.error('Error deleting applicant identification data:', error);
+      throw new Error('Failed to delete applicant identification data');
     }
-  };
+  }
+}
+Key Features
+Parallel Deletion:
 
-  return {
-    participantNameList,
-    onFetchEventParticipants,
-  };
-};
-Step 3: Ensure the Route Includes id
-Make sure your EventInfo route in App.tsx or Routes.tsx includes the id parameter:
+Uses Promise.all to delete data from multiple tables concurrently.
+Improves efficiency for independent deletions.
+Error Handling:
 
-tsx
+Logs errors to assist with debugging.
+Throws meaningful errors for higher-level handling.
+Database Operations:
+
+Deletes the applicant's identification data from the jpki_identification_table.
+Deletes related records from the application_table.
+Validation Updates:
+
+Updates the is_valid field in the application_status_table to reflect the deletion.
+Integration in Router
+Add the controller to your routing setup:
+
+typescript
 Copy code
-<Routes>
-  <Route path="/EventInfo/:id" element={<EventInfo />} />
-</Routes>
-Why This Works
-useParams Extracts the Route Parameter:
+import { Router } from 'express';
+import { deleteApplicationData } from '../controllers/deleteApplicationDataController';
 
-useParams is used to fetch the id from the route, which is then passed to the useEventInfo hook.
-Custom Hook Requires the id:
+const router = Router();
 
-The hook fetches the participant data for the specific id.
-Avoid Missing Arguments:
+router.delete('/applications/identification-data', deleteApplicationData);
 
-By ensuring id is always passed, you avoid the Expected 1 arguments, but got 0 error.
-Final Code
-Here’s the corrected setup:
+export default router;
+Frontend Example
+If the frontend triggers the delete request, it will send the referenceNumber and userType in the body of the DELETE request, which will then be processed by the backend.
 
-EventInfo Component:
-tsx
+Frontend Request
+typescript
 Copy code
-import { useParams } from "react-router-dom";
-import { useEffect } from "react";
-import { useEventInfo } from "../hooks/useEventInfo";
+import axios from 'axios';
 
-const EventInfo = () => {
-  const { id } = useParams<{ id: string }>(); // Extract ID from route
-
-  const {
-    participantNameList,
-    onFetchEventParticipants,
-  } = useEventInfo(id ?? "1"); // Pass ID to hook
-
-  useEffect(() => {
-    onFetchEventParticipants(); // Fetch participants on mount
-  }, [onFetchEventParticipants]);
-
-  return (
-    <div>
-      <h1>Event Participants</h1>
-      {/* Render participantNameList */}
-    </div>
-  );
-};
-
-export default EventInfo;
-Custom Hook:
-tsx
-Copy code
-import { useState } from "react";
-import { fetchEventParticipants } from "../services/fetchEventParticipants";
-
-export const useEventInfo = (id: string) => {
-  const [participantNameList, setParticipantNameList] = useState<
-    { name: string; department: string }[]
-  >([]);
-
-  const onFetchEventParticipants = async () => {
-    try {
-      const data = await fetchEventParticipants(id);
-      setParticipantNameList(data);
-    } catch (err) {
-      console.error("Error fetching participants:", err);
+const deleteApplicantIdentificationData = async (referenceNumber: string, userType: string) => {
+  try {
+    const response = await axios.delete('/api/applications/identification-data', {
+      data: {
+        referenceNumber,
+        userType,
+      },
+    });
+    if (response.status === 204) {
+      console.log('Data deleted successfully');
     }
-  };
-
-  return {
-    participantNameList,
-    onFetchEventParticipants,
-  };
+  } catch (error) {
+    console.error('Error deleting applicant identification data:', error);
+  }
 };
-Let me know if you encounter further issues!
-
-
-
-
-
-
+Summary
