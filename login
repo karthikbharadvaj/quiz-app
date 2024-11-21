@@ -1,168 +1,195 @@
-
-Here’s how you can structure the delete use case for the above context, leveraging a similar structure to the provided getApplicationData use case but tailored for deletion:
-
-Delete Use Case
-This use case will:
-
-Extract necessary data (like referenceNumber and userType) from the request.
-Perform deletions using repositories or API clients.
-Return appropriate HTTP status codes and results.
-Here’s how the delete use case might look:
-
+Complete Controller File: deleteApplicationDataController.ts
 typescript
 Copy code
 import { Request, Response, NextFunction } from 'express';
-import { apiClient } from '../api/apiClient';
-import { AxiosRequestConfig } from 'axios';
 import { DeleteApplicantIdentificationDataUseCase } from '../useCases/DeleteApplicantIdentificationDataUseCase';
 
-export function deleteApplicationData(
+/**
+ * Controller to delete applicant identification data.
+ */
+export async function deleteApplicationDataController(
   req: Request,
   res: Response,
   next: NextFunction
-): void {
-  const path = 'api/open-bank-account/applications'; // Backend API endpoint
-  const config: AxiosRequestConfig = {
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-    responseType: 'json',
-  };
+): Promise<void> {
+  try {
+    const { referenceNumber, userType } = req.body;
 
-  const { referenceNumber, userType } = req.body;
+    // Validate request body
+    if (!referenceNumber || !userType) {
+      return res.status(400).json({ error: 'Reference number and user type are required.' });
+    }
 
-  apiClient
-    .delete(path, {
-      ...config,
-      data: {
-        referenceNumber,
-        userType,
-      },
-    })
-    .then(() => {
-      const useCase = new DeleteApplicantIdentificationDataUseCase({
-        referenceNumber,
-        userType,
-      });
+    // Instantiate and execute the use case
+    const deleteUseCase = new DeleteApplicantIdentificationDataUseCase();
+    await deleteUseCase.execute({ referenceNumber, userType });
 
-      // Perform the deletion via the use case
-      return useCase.deleteIdentificationData();
-    })
-    .then(() => {
-      // Respond with success
-      res.status(204).json({
-        message: 'Applicant identification data deleted successfully',
-      });
-    })
-    .catch((err) => {
-      next(err); // Pass the error to the error handler
-    });
+    // Respond with a success status
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error in deleteApplicationDataController:', error);
+    next(error); // Pass error to middleware
+  }
 }
-Explanation
-Request Handling:
-
-Extracts the referenceNumber and userType from the request body.
-API Client Deletion:
-
-Calls the backend delete endpoint with the necessary data.
-Use Case Integration:
-
-Initializes and executes the DeleteApplicantIdentificationDataUseCase to handle application-specific logic.
-Error Handling:
-
-Any errors encountered during the API call or use case execution are passed to the next middleware using next(err).
-DeleteApplicantIdentificationDataUseCase
-Below is an example of how the DeleteApplicantIdentificationDataUseCase might look, focusing on business logic:
-
+Complete Use Case File: DeleteApplicantIdentificationDataUseCase.ts
 typescript
 Copy code
+import { getDbClient } from '../config/dbClient';
+
+/**
+ * Use case to handle deletion of applicant identification data.
+ */
 export class DeleteApplicantIdentificationDataUseCase {
-  private referenceNumber: string;
-  private userType: string;
+  /**
+   * Executes the deletion of applicant identification data.
+   *
+   * @param {Object} params - Parameters for the deletion process.
+   * @param {string} params.referenceNumber - The reference number for the applicant.
+   * @param {string} params.userType - The user type ('AGENT' or 'REPRESENTATIVE').
+   */
+  async execute({ referenceNumber, userType }: { referenceNumber: string; userType: string }): Promise<void> {
+    const dbClient = await getDbClient();
 
-  constructor({ referenceNumber, userType }: { referenceNumber: string; userType: string }) {
-    this.referenceNumber = referenceNumber;
-    this.userType = userType;
-  }
-
-  async deleteIdentificationData(): Promise<void> {
     try {
-      const dbClient = await getDbClient();
-
-      // Perform database deletions
+      // Perform deletion in parallel
       await Promise.all([
         dbClient.execute(
           `DELETE FROM jpki_identification_table WHERE reference_number = $1 AND user_type = $2`,
-          [this.referenceNumber, this.userType]
+          [referenceNumber, userType]
         ),
         dbClient.execute(
           `DELETE FROM application_table WHERE reference_number = $1`,
-          [this.referenceNumber]
+          [referenceNumber]
         ),
       ]);
 
-      // Optionally update other states, such as validation
+      // Update validation status
       await dbClient.execute(
         `UPDATE application_status_table SET is_valid = false WHERE reference_number = $1`,
-        [this.referenceNumber]
+        [referenceNumber]
       );
     } catch (error) {
-      console.error('Error deleting applicant identification data:', error);
-      throw new Error('Failed to delete applicant identification data');
+      console.error('Error executing DeleteApplicantIdentificationDataUseCase:', error);
+      throw new Error('Failed to delete applicant identification data.');
+    } finally {
+      // Close the database connection if needed
+      await dbClient.close();
     }
   }
 }
-Key Features
-Parallel Deletion:
+Supporting Config: dbClient.ts
+If the getDbClient function is not defined, you need to implement it. Below is an example configuration for managing a PostgreSQL database client:
 
-Uses Promise.all to delete data from multiple tables concurrently.
-Improves efficiency for independent deletions.
-Error Handling:
+typescript
+Copy code
+import { Pool, PoolClient } from 'pg';
 
-Logs errors to assist with debugging.
-Throws meaningful errors for higher-level handling.
-Database Operations:
+let pool: Pool;
 
-Deletes the applicant's identification data from the jpki_identification_table.
-Deletes related records from the application_table.
-Validation Updates:
+/**
+ * Initialize the database pool if not already initialized.
+ */
+function initializePool(): Pool {
+  if (!pool) {
+    pool = new Pool({
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: Number(process.env.DB_PORT),
+    });
+  }
+  return pool;
+}
 
-Updates the is_valid field in the application_status_table to reflect the deletion.
-Integration in Router
-Add the controller to your routing setup:
+/**
+ * Get a database client from the connection pool.
+ */
+export async function getDbClient(): Promise<PoolClient> {
+  const pool = initializePool();
+  return pool.connect();
+}
+Router File: routes.ts
+Integrate the controller into your Express router:
 
 typescript
 Copy code
 import { Router } from 'express';
-import { deleteApplicationData } from '../controllers/deleteApplicationDataController';
+import { deleteApplicationDataController } from '../controllers/deleteApplicationDataController';
 
 const router = Router();
 
-router.delete('/applications/identification-data', deleteApplicationData);
+// Route to handle the deletion of applicant identification data
+router.delete('/applications/identification-data', deleteApplicationDataController);
 
 export default router;
-Frontend Example
-If the frontend triggers the delete request, it will send the referenceNumber and userType in the body of the DELETE request, which will then be processed by the backend.
+Folder Structure
+Ensure your folder structure is organized as follows:
 
-Frontend Request
+arduino
+Copy code
+src/
+├── config/
+│   └── dbClient.ts
+├── controllers/
+│   └── deleteApplicationDataController.ts
+├── useCases/
+│   └── DeleteApplicantIdentificationDataUseCase.ts
+├── routes/
+│   └── routes.ts
+Key Features
+Controller:
+
+Validates the request body.
+Instantiates and invokes the DeleteApplicantIdentificationDataUseCase.
+Use Case:
+
+Handles the core logic for deleting data.
+Deletes data from jpki_identification_table and application_table.
+Updates the validation status in application_status_table.
+Uses Promise.all for concurrent operations.
+Database Client:
+
+Implements getDbClient to manage the database connection pool.
+Ensures efficient and reusable database operations.
+Error Handling:
+
+Errors in the use case are propagated to the controller, which logs them and passes them to middleware.
+Example Environment Variables
+Ensure your .env file includes the following database configuration:
+
+env
+Copy code
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=your_database_name
+Testing the Controller
+Test Case for Controller
+Use a tool like Jest to test the controller:
+
 typescript
 Copy code
-import axios from 'axios';
+import request from 'supertest';
+import { server } from '../app'; // Assuming your Express app is exported from app.ts
 
-const deleteApplicantIdentificationData = async (referenceNumber: string, userType: string) => {
-  try {
-    const response = await axios.delete('/api/applications/identification-data', {
-      data: {
-        referenceNumber,
-        userType,
-      },
-    });
-    if (response.status === 204) {
-      console.log('Data deleted successfully');
-    }
-  } catch (error) {
-    console.error('Error deleting applicant identification data:', error);
-  }
-};
+describe('DELETE /applications/identification-data', () => {
+  it('should delete applicant identification data successfully', async () => {
+    const response = await request(server)
+      .delete('/applications/identification-data')
+      .send({ referenceNumber: '123456', userType: 'AGENT' });
+
+    expect(response.status).toBe(204);
+  });
+
+  it('should return 400 if referenceNumber or userType is missing', async () => {
+    const response = await request(server)
+      .delete('/applications/identification-data')
+      .send({ userType: 'AGENT' }); // Missing referenceNumber
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Reference number and user type are required.' });
+  });
+});
 Summary
