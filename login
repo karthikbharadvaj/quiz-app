@@ -1,97 +1,69 @@
-Updated Code for CardContentBox
-tsx
-Copy code
-import React from "react";
-import { Box } from "@mui/material";
-import EventParticipateTag from "./EventParticipateTag"; // Ensure this is correctly imported
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import axios from 'axios';
+import { NewBankApplyIdentityConfirmationApplicant } from '../NewBankApplyIdentityConfirmationApplicant';
 
-const CardContentBox = ({ id, name, image, tags, circleName, date, participants, userId }) => {
-  const isIncludeUserIdInParticipantsList = participants
-    ? participants.includes(userId?.toString())
-    : false;
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-  return (
-    <Box
-      key={name + "card" + id.toString()}
-      onClick={() => onClickInfoBtn(id)}
-      sx={{
-        border: "1px solid #E4E7E7",
-        width: "48%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        borderRadius: "8px",
-        boxShadow: 3,
-        pt: 2,
-        mb: 2,
-        bgcolor: "#FFFFFF",
-        position: "relative", // Ensure the container is positioned relatively for the tag to be positioned
-      }}
-    >
-      {/* Image */}
-      <img
-        src={image}
-        alt={image}
-        style={{
-          width: "100%",
-          height: "120px",
-          objectFit: "cover",
-        }}
-      />
+describe('やり直す Button Behavior', () => {
+  it('should display the modal and delete data when やり直す is clicked', async () => {
+    // Mock API response for deletion
+    mockedAxios.delete.mockResolvedValueOnce({ status: 204 });
 
-      {/* Display 参加予定 Tag */}
-      {isIncludeUserIdInParticipantsList && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            background: "#F18F01",
-            color: "#FFFFFF",
-            borderRadius: "20px",
-            padding: "4px 12px",
-            fontSize: "14px",
-            fontWeight: 600,
-          }}
-        >
-          参加予定
-        </Box>
-      )}
+    // Render the component
+    render(<NewBankApplyIdentityConfirmationApplicant />);
 
-      {/* Event Details */}
-      <Box sx={{ height: "8px" }} />
-      <MainNameBox name={name} />
-      <ContentType name="Event" circleName={circleName} />
-      <ContentType name="Event" dateBoxForEvent date={date} />
-      <Box sx={{ height: "4px" }} />
-      <TagListBox tags={tags} />
-    </Box>
-  );
-};
+    // Ensure the やり直す button is present initially
+    const yarinaosuButton = screen.getByRole('button', { name: 'やり直す' });
+    expect(yarinaosuButton).toBeInTheDocument();
 
-export default CardContentBox;
-Key Changes
-Added isIncludeUserIdInParticipantsList Logic:
+    // Click on the やり直す button
+    fireEvent.click(yarinaosuButton);
 
-Accept participants and userId as props in the CardContentBox component.
-Determine if the current user is participating using the same logic as the EventInfo page.
-Positioned Tag:
+    // Ensure the modal appears
+    const modalText = screen.getByText('本当にやり直しますか?');
+    expect(modalText).toBeInTheDocument();
 
-Added the 参加予定 tag in a Box with position: absolute at the top-right corner of the CardContentBox.
-Dynamic Display:
+    // Ensure the modal's やり直す button is present
+    const modalYarinaosuButton = screen.getByRole('button', { name: 'やり直す' });
+    expect(modalYarinaosuButton).toBeInTheDocument();
 
-The 参加予定 tag only renders if isIncludeUserIdInParticipantsList is true.
-Example Usage
-tsx
-Copy code
-<CardContentBox
-  id={event.id}
-  name={event.name}
-  image={event.image}
-  tags={event.tags}
-  circleName={event.circleName}
-  date={event.date}
-  participants={event.participants}
-  userId={currentUser?.id} // Pass the logged-in user's ID
-/>
-Result
+    // Click the modal's やり直す button
+    fireEvent.click(modalYarinaosuButton);
+
+    // Wait for the API call to resolve
+    await waitFor(() => expect(mockedAxios.delete).toHaveBeenCalledWith('/mockurl', {
+      data: { referenceNumber: 'mockReferenceNumber', userType: 'AGENT' },
+    }));
+
+    // Ensure the やり直す button is no longer visible
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'やり直す' })).not.toBeInTheDocument());
+  });
+
+  it('should display an error message if the API call fails', async () => {
+    // Mock API failure
+    mockedAxios.delete.mockRejectedValueOnce(new Error('Mock API Error'));
+
+    // Render the component
+    render(<NewBankApplyIdentityConfirmationApplicant />);
+
+    // Click on the やり直す button
+    const yarinaosuButton = screen.getByRole('button', { name: 'やり直す' });
+    fireEvent.click(yarinaosuButton);
+
+    // Click the modal's やり直す button
+    const modalYarinaosuButton = screen.getByRole('button', { name: 'やり直す' });
+    fireEvent.click(modalYarinaosuButton);
+
+    // Wait for the API call to fail
+    await waitFor(() => expect(mockedAxios.delete).toHaveBeenCalled());
+
+    // Ensure an error message is displayed
+    const errorMessage = screen.getByText('削除に失敗しました。もう一度お試しください。');
+    expect(errorMessage).toBeInTheDocument();
+
+    // Ensure the やり直す button is still visible
+    expect(screen.getByRole('button', { name: 'やり直す' })).toBeInTheDocument();
+  });
+});
