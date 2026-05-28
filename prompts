@@ -1,0 +1,52 @@
+Here are the prompts you can use with Roo Code. I have structured them to be highly specific, ensuring the agent ignores irrelevant folders, targets the exact Japanese keywords necessary for the search, and outputs the final result in English as a structured table.
+### Prompt 1: Codebase Search
+Use this prompt to have Roo Code search your newly cloned repository. It explicitly tells the agent which Japanese terms to look for and strictly formats the output in English.
+```text
+Please search this repository to find the logic and condition tables for the "maintenance flow" (保全フロー). 
+
+To avoid wasting time, STRICTLY EXCLUDE `node_modules`, `dist`, `build`, `coverage`, `.git`, and any other standard dependency or build directories from your search. 
+
+Look for Japanese keywords in the codebase (such as in React components, state management files, or business logic controllers) related to the following:
+- 保全フロー (Maintenance flow)
+- 取消 (Cancellation)
+- 解約 (Termination)
+- 支払いカード変更 (Payment card change)
+- ボタン (Button) / 表示 (Display/Show) / 非表示 (Hide) / 活性 (Enabled) / 非活性 (Disabled)
+- エラー (Error) / 次画面 (Next screen)
+
+Once you find the logic, extract the rules and summarize them completely in ENGLISH. Format your response as a Markdown table with the following columns:
+1. Flow / Action (Cancellation, Termination, Card Change, etc.)
+2. Contract State (When can this be done?)
+3. Button State (Show / Hide / Enabled / Disabled)
+4. Post-Click Action (Proceed to next screen OR Error)
+5. Error Branch / Destination (If applicable)
+
+Do not translate the code files themselves, just analyze the logic and provide the English summary table.
+
+```
+### Prompt 2: Confluence Search via API
+If the logic is not in the codebase, you can use this prompt. Since Roo Code can execute commands in your terminal, this prompt instructs it to read your .env file and use the Atlassian REST API to fetch and analyze the page content.
+*Note: Replace <Insert Confluence Page Link or ID Here> before sending this to the agent.*
+```text
+I need to find the condition table for the "maintenance flow" (保全フロー) in our Confluence documentation. The logic might not be in the codebase yet. 
+
+I have my Atlassian API token, URL, and user email set up in the `.env` file in this directory. 
+
+Please do the following:
+1. Read the `.env` file to get the Atlassian credentials.
+2. Write and execute a temporary script (or use a `curl` command) to fetch the content of the following Confluence page (and its child pages in the folder if necessary): <Insert Confluence Page Link or ID Here>
+3. Analyze the retrieved text/HTML for the business logic regarding the 保全フロー (Maintenance flow). Specifically, look for rules around:
+   - Contract states allowing 取消 (Cancellation), 解約 (Termination), or 支払いカード変更 (Payment card change).
+   - Button visibility and enablement (Show, Hide, Enabled, Disabled).
+   - Actions after pressing the button (Proceed or Error).
+   - Error branching paths.
+
+Translate your findings and present the final output to me in ENGLISH as a Markdown table with the following columns:
+1. Flow / Action 
+2. Contract State 
+3. Button State 
+4. Post-Click Action 
+5. Error Branch / Destination 
+
+```
+**A quick tip for the Confluence prompt:** If you know the specific Page ID (usually found at the end of the URL or by viewing page info), passing just the ID instead of the full URL often helps AI agents construct the Atlassian API endpoint (/wiki/api/v2/pages/{id}) much faster.
